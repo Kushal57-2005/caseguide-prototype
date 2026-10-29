@@ -87,9 +87,6 @@ export default function LegalAnswerCard({ answer, latencyMs = 0, model = 'Nemotr
       `Problem: ${answer.problem_summary || ''}`,
       `Category: ${answer.category || 'General'}`,
       ``,
-      `LEGAL MATCHES:`,
-      ...(answer.legal_match || []).map(m => `- ${m.name} [${m.reference}] (Confidence: ${m.confidence}): ${m.why_it_applies}`),
-      ``,
       `IN PLAIN WORDS:`,
       `${answer.plain_explanation || ''}`,
       ``,
@@ -179,56 +176,7 @@ export default function LegalAnswerCard({ answer, latencyMs = 0, model = 'Nemotr
         </h3>
       </div>
 
-      {/* 2. Legal Match Chips with Confidence Badges & India Code Link */}
-      {answer.legal_match && answer.legal_match.length > 0 && (
-        <div>
-          <div className="card-section-title">
-            <Scale size={13} /> Legal Match & Statutory Provisions
-          </div>
-          <div className="legal-chips-grid">
-            {answer.legal_match.map((item, idx) => {
-              const conf = item.confidence?.toLowerCase() || 'medium';
-              const confClass = conf === 'high' ? 'confidence-high' : conf === 'low' ? 'confidence-low' : 'confidence-medium';
-              const indiaCodeUrl = `https://www.indiacode.nic.in/handle/123456789/1362/simple-search?query=${encodeURIComponent(item.name || item.reference)}`;
-
-              return (
-                <div key={idx} className="legal-chip-item">
-                  <div className="chip-header">
-                    <div className="chip-act-name">
-                      <span>{item.name}</span>
-                      {item.reference && (
-                        <span className="chip-reference">({item.reference})</span>
-                      )}
-                    </div>
-                    <div className="chip-badges-wrap">
-                      <span className={`confidence-badge ${confClass}`}>
-                        {conf} confidence
-                      </span>
-                      <a
-                        href={indiaCodeUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="verify-link"
-                        title="Verify section on official India Code repository"
-                      >
-                        Verify on India Code
-                        <ExternalLink size={10} />
-                      </a>
-                    </div>
-                  </div>
-                  {item.why_it_applies && (
-                    <p className="chip-why-text">
-                      <strong>Why it applies:</strong> {item.why_it_applies}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 3. In Plain Words */}
+      {/* In Plain Words */}
       {answer.plain_explanation && (
         <div>
           <div className="card-section-title">

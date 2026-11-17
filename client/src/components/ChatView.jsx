@@ -22,13 +22,6 @@ import {
   X
 } from 'lucide-react';
 
-const PROGRESS_STAGES = [
-  'Reviewing your legal question...',
-  'Analyzing applicable Indian statutes & provisions...',
-  'Cross-referencing verified legal sources...',
-  'Formulating structured legal guidance...'
-];
-
 export default function ChatView({
   chat,
   messages = [],
@@ -44,7 +37,6 @@ export default function ChatView({
   setResearchMode = () => {}
 }) {
   const [inputText, setInputText] = useState('');
-  const [stageIndex, setStageIndex] = useState(0);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [headerTitle, setHeaderTitle] = useState(chat?.title || '');
   const messagesEndRef = useRef(null);
@@ -59,15 +51,6 @@ export default function ChatView({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading, error]);
-
-  // Cycle progress ticker while loading
-  useEffect(() => {
-    if (!loading) return;
-    const interval = setInterval(() => {
-      setStageIndex((prev) => (prev + 1) % PROGRESS_STAGES.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [loading]);
 
   const handleSubmit = (e) => {
     e?.preventDefault();
@@ -200,19 +183,13 @@ export default function ChatView({
                 );
               })}
 
-              {/* Loading State */}
+              {/* Sleek Minimalist Antigravity Loading Dots Animation */}
               {loading && (
-                <div className="loading-state-row">
-                  <div className="loading-pulse-card">
-                    <div className="loading-spinner" />
-                    <div className="loading-text-wrap">
-                      <span className="loading-stage-text">
-                        {PROGRESS_STAGES[stageIndex]}
-                      </span>
-                      <span className="loading-subtext">
-                        Referencing Indian laws and legal databases...
-                      </span>
-                    </div>
+                <div className="loading-state-row" aria-label="Loading legal response">
+                  <div className="antigravity-dots-loader">
+                    <span className="antigravity-dot" />
+                    <span className="antigravity-dot" />
+                    <span className="antigravity-dot" />
                   </div>
                 </div>
               )}

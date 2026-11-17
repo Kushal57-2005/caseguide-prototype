@@ -11,15 +11,18 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "axios": "^1.21.1",
     "bcryptjs": "^3.0.2",
     "caseguide": "file:..",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "form-data": "^4.0.6",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
+    "multer": "^2.5.0",
     "openai": "^4.82.0",
     "zod": "^3.24.1"
   },

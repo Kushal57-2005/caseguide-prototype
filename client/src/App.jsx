@@ -1,18 +1,19 @@
 /**
  * @file App.jsx
- * @description Main application component orchestrating user authentication, chat conversations,
- * sidebar transitions, and error management.
- * @inputs Root React state and AuthContext.
- * @outputs Unified interactive caseGuide application shell.
+ * @description Master application shell for CaseGuide.
+ * Coordinates user authentication, theme management, chat state,
+ * sidebar interactions, and settings modal.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { ThemeProvider } from './context/ThemeContext.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ChatView from './components/ChatView.jsx';
+import SettingsModal from './components/SettingsModal.jsx';
 import { api } from './services/api.js';
-import { Scale } from 'lucide-react';
+import logoImg from './assets/logo.jpg';
 
 function MainApp() {
   const { user, loading: authLoading } = useAuth();
@@ -23,6 +24,11 @@ function MainApp() {
   const [error, setError] = useState(null);
   const [lastQuestion, setLastQuestion] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Legal research configuration
+  const [researchDomain, setResearchDomain] = useState('All Domains');
+  const [researchMode, setResearchMode] = useState('Detailed Research');
 
   // Fetch all user chats on login
   const loadChats = useCallback(async (selectId = null) => {
@@ -33,7 +39,6 @@ function MainApp() {
         if (selectId) {
           setCurrentChatId(selectId);
         } else if (res.chats.length > 0 && !currentChatId) {
-          // Default to the most recent conversation
           setCurrentChatId(res.chats[0]._id);
         }
       }
@@ -92,7 +97,7 @@ function MainApp() {
         setChats(prev => prev.map(c => c._id === chatId ? { ...c, title: newTitle } : c));
       }
     } catch (err) {
-      alert(`Could not rename chat: ${err.message}`);
+      alert(`Could not rename conversation: ${err.message}`);
     }
   };
 
@@ -112,7 +117,7 @@ function MainApp() {
         }
       }
     } catch (err) {
-      alert(`Could not delete chat: ${err.message}`);
+      alert(`Could not delete conversation: ${err.message}`);
     }
   };
 
@@ -140,7 +145,9 @@ function MainApp() {
       }
 
       // Optimistically append user message to UI
+      const optimisticId = `temp-${Date.now()}`;
       const optimisticUserMsg = {
+        _id: optimisticId,
         chatId,
         role: 'user',
         content: questionText,
@@ -148,13 +155,17 @@ function MainApp() {
       };
       setMessages(prev => [...prev, optimisticUserMsg]);
 
-      // 2. Query LLM via /api/chats/:id/ask
+      // 2. Query legal AI microservice via /api/chats/:id/ask
       const askRes = await api.chats.ask(chatId, questionText);
 
       if (askRes.success && askRes.assistantMessage) {
         setMessages(prev => {
-          // Replace or append assistant response
-          return [...prev, askRes.assistantMessage];
+          const filtered = prev.filter(m => m._id !== optimisticId);
+          return [
+            ...filtered,
+            askRes.userMessage || optimisticUserMsg,
+            askRes.assistantMessage
+          ];
         });
 
         // Update chat title in sidebar if updated
@@ -166,6 +177,8 @@ function MainApp() {
       }
     } catch (err) {
       console.error('Ask error:', err);
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => !String(m._id || '').startsWith('temp-')));
       setError(err.message || 'Unable to contact legal AI assistant. Please try again.');
     } finally {
       setLoadingAnswer(false);
@@ -181,12 +194,12 @@ function MainApp() {
   // Loading initial session
   if (authLoading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#080d16', color: '#f59e0b' }}>
-        <div className="brand-logo" style={{ width: '56px', height: '56px', marginBottom: '16px' }}>
-          <Scale size={28} />
+      <div className="auth-loading-screen">
+        <div className="auth-loading-emblem">
+          <img src={logoImg} alt="CaseGuide" />
         </div>
-        <div style={{ fontSize: '1.2rem', fontFamily: 'Playfair Display, serif', color: '#ffffff' }}>caseGuide</div>
-        <div style={{ fontSize: '0.85rem', color: '#8899af', marginTop: '6px' }}>Verifying security session...</div>
+        <div className="auth-loading-title font-serif">CaseGuide</div>
+        <div className="auth-loading-subtitle">Verifying security session...</div>
       </div>
     );
   }
@@ -200,7 +213,7 @@ function MainApp() {
 
   return (
     <div className="app-container">
-      {/* Sidebar with Chat History */}
+      {/* Left Sidebar */}
       <Sidebar
         chats={chats}
         currentChatId={currentChatId}
@@ -213,9 +226,10 @@ function MainApp() {
         onDeleteChat={handleDeleteChat}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
-      {/* Main Consultation Area */}
+      {/* Main Conversation Area */}
       <ChatView
         chat={activeChat}
         messages={messages}
@@ -224,6 +238,20 @@ function MainApp() {
         error={error}
         onRetry={handleRetry}
         onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+        researchDomain={researchDomain}
+        setResearchDomain={setResearchDomain}
+        researchMode={researchMode}
+        setResearchMode={setResearchMode}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        researchDomain={researchDomain}
+        onDomainChange={setResearchDomain}
+        researchMode={researchMode}
+        onModeChange={setResearchMode}
       />
     </div>
   );
@@ -231,8 +259,10 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

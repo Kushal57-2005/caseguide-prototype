@@ -15,6 +15,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import healthRoutes from './routes/healthRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -40,7 +41,7 @@ export function createApp() {
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Key']
     })
   );
 
@@ -55,6 +56,7 @@ export function createApp() {
   app.use('/api/health', healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/chats', chatRoutes);
+  app.use('/api/documents', documentRoutes);
 
   // 404 handler for undefined routes
   app.use('*', (req, res) => {

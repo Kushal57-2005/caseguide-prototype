@@ -1,114 +1,119 @@
 /**
  * @file LegalAnswerCard.jsx
- * @description Master structured answer card rendering Indian legal provisions, next steps, forum details,
- * interactive document checklist, timeline, warnings, India Code verification, and export tools (Copy & Print).
- * @inputs Props { answer, latencyMs, model, error }
- * @outputs Fully formatted interactive legal card.
+ * @description Claude-inspired editorial legal response component:
+ * - Editorial typography with Markdown rendering
+ * - Expandable Legal Sources & Statutory Citations (Act, Section, verbatim quote, India Code link)
+ * - Judgment Presentation Cards (Case title, Court, Case number, Paragraphs)
+ * - What to Do Next (Action Steps)
+ * - Warnings & Limitations callout
+ * - Subtle response actions (Copy, Regenerate, Thumbs Up/Down feedback, Print)
  */
 
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import {
+  BookOpen,
   Scale,
-  ShieldAlert,
   Clock,
-  Building2,
-  Receipt,
-  FileCheck2,
   ExternalLink,
   Copy,
   Printer,
   Check,
   AlertTriangle,
-  Info,
-  CalendarDays
+  RotateCcw,
+  ThumbsUp,
+  ThumbsDown,
+  ChevronDown,
+  ChevronUp,
+  FileText
 } from 'lucide-react';
 
-export default function LegalAnswerCard({ answer, latencyMs = 0, model = 'Nemotron' }) {
+export default function LegalAnswerCard({
+  answer,
+  onRegenerate = null
+}) {
   const [copied, setCopied] = useState(false);
-  const [checkedDocs, setCheckedDocs] = useState({});
+  const [feedback, setFeedback] = useState(null); // 'helpful' | 'unhelpful' | null
+  const [sourcesExpanded, setSourcesExpanded] = useState(true);
+  const [expandedCitationIndex, setExpandedCitationIndex] = useState(null);
 
   if (!answer) return null;
 
-  // Handle Out-Of-Scope Questions
-  if (answer.in_scope === false) {
-    return (
-      <div className="answer-card out-of-scope-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', marginBottom: '12px' }}>
-          <Info size={24} />
-          <h3 className="font-serif" style={{ fontSize: '1.2rem' }}>Not a Legal Issue (Out of Scope)</h3>
-        </div>
-        <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto 16px auto' }}>
-          {answer.plain_explanation || 'This question does not appear to involve Indian legal or statutory rights. caseGuide specializes in Indian laws (BNS, BNSS, Consumer Protection, RTI, Cyber Fraud, Tenancy, and Civil/Criminal procedures).'}
-        </p>
-        <div style={{ fontSize: '0.8rem', color: '#8899af' }}>
-          Please try asking about a consumer grievance, banking fraud, police FIR issue, or legal query.
-        </div>
-      </div>
-    );
-  }
+  // Extract structured response or fallback to legacy answer structure
+  const rag = answer?.structuredResponse || answer || {};
+  const problemSummary = rag.problem_summary || {};
+  const answerDetails = rag.answer || {};
+  const citations = Array.isArray(rag.citations) ? rag.citations : [];
+  const nextStepsActions = Array.isArray(rag.next_steps?.actions)
+    ? rag.next_steps.actions
+    : Array.isArray(rag.next_steps)
+    ? rag.next_steps
+    : [];
+  const warningsList = Array.isArray(rag.warnings) ? rag.warnings : [];
+  const limitationsList = Array.isArray(rag.limitations) ? rag.limitations : [];
 
-  // Handle Unstructured Fallback Text
-  if (answer.is_fallback_unstructured) {
-    return (
-      <div className="answer-card">
-        <div className="answer-header">
-          <div className="category-badge">
-            <Info size={12} /> Notice
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#8899af' }}>
-            Model output delivered as plain text
-          </div>
-        </div>
-        <div className="plain-explanation-box">
-          {answer.plain_explanation}
-        </div>
-        <div className="official-banner">
-          <div>⚠️ AI-generated, not verified against official sources. Check the sections on indiacode.nic.in or with a lawyer.</div>
-          <a href="https://www.indiacode.nic.in" target="_blank" rel="noreferrer">
-            Visit India Code <ExternalLink size={12} style={{ display: 'inline' }} />
-          </a>
-        </div>
-      </div>
-    );
-  }
+  // Plain explanation / summary
+  const summaryText =
+    (typeof answerDetails === 'object' ? answerDetails.summary : null) ||
+    answer?.plain_explanation ||
+    '';
 
-  const toggleDoc = (index) => {
-    setCheckedDocs(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  };
+  const explanationPoints =
+    typeof answerDetails === 'object' && Array.isArray(answerDetails.explanation)
+      ? answerDetails.explanation
+      : [];
+
+  const problemTitle =
+    (typeof problemSummary === 'object' ? problemSummary.title : null) ||
+    (typeof answer?.problem_summary === 'string' ? answer.problem_summary : null) ||
+    '';
+
+  const category =
+    (typeof problemSummary === 'object' ? problemSummary.category : null) ||
+    answer?.category ||
+    'Indian Law';
+
+  // Extract judgments if present in citations or structured response
+  const judgments = Array.isArray(rag.judgments)
+    ? rag.judgments
+    : citations.filter(
+        (c) =>
+          c.act?.toLowerCase().includes('court') ||
+          c.title?.toLowerCase().includes(' v. ') ||
+          c.title?.toLowerCase().includes(' vs ') ||
+          c.section?.toLowerCase().includes('judgment')
+      );
+
+  const statutoryCitations = citations.filter(
+    (c) => !judgments.some((j) => j.citation_id === c.citation_id)
+  );
 
   // Plain text export for clipboard
   const handleCopyText = () => {
-    const lines = [
-      `caseGuide Legal Information Summary`,
-      `====================================`,
-      `Problem: ${answer.problem_summary || ''}`,
-      `Category: ${answer.category || 'General'}`,
-      ``,
-      `IN PLAIN WORDS:`,
-      `${answer.plain_explanation || ''}`,
-      ``,
-      `NEXT STEPS:`,
-      ...(answer.next_steps || []).map((s, i) => `${i + 1}. ${s.title}: ${s.detail}`),
-      ``,
-      `FORUM:`,
-      `Office: ${answer.forum?.office || 'N/A'}`,
-      `Statutory Fee: ${answer.forum?.fee || 'N/A'}`,
-      `Likely Time: ${answer.forum?.likely_time || 'N/A'}`,
-      ``,
-      `DOCUMENTS NEEDED:`,
-      ...(answer.documents_needed || []).map(d => `- [ ] ${d}`),
-      ``,
-      `TIMELINE:`,
-      ...(answer.timeline || []).map(t => `- ${t.when}: ${t.what}`),
-      ``,
-      `WARNINGS:`,
-      ...(answer.warnings || []).map(w => `! ${w}`),
-      ``,
-      `Disclaimer: ${answer.disclaimer || ''}`
-    ];
+    const lines = [];
+    if (problemTitle) lines.push(`CaseGuide Legal Research: ${problemTitle}`, ``);
+    if (summaryText) lines.push(`Summary:`, summaryText, ``);
+    if (explanationPoints.length > 0) {
+      lines.push(`Legal Explanation:`);
+      explanationPoints.forEach((p, i) => lines.push(`${i + 1}. ${p}`));
+      lines.push(``);
+    }
+    if (citations.length > 0) {
+      lines.push(`Sources:`);
+      citations.forEach((c) => {
+        lines.push(`- ${c.act} (${c.section || ''}): ${c.title || ''}`);
+        if (c.supporting_text) lines.push(`  "${c.supporting_text}"`);
+      });
+      lines.push(``);
+    }
+    if (nextStepsActions.length > 0) {
+      lines.push(`Next Steps:`);
+      nextStepsActions.forEach((s, i) => {
+        lines.push(`${i + 1}. ${s.title || ''}: ${s.description || s.detail || ''}`);
+      });
+      lines.push(``);
+    }
+    lines.push(`Generated by CaseGuide AI Indian Legal Research Assistant.`);
 
     navigator.clipboard.writeText(lines.join('\n'));
     setCopied(true);
@@ -119,88 +124,154 @@ export default function LegalAnswerCard({ answer, latencyMs = 0, model = 'Nemotr
     window.print();
   };
 
+  const handleFeedback = (val) => {
+    setFeedback((prev) => (prev === val ? null : val));
+  };
+
   return (
-    <article className="answer-card" id="legal-answer-card">
-      {/* Card Header & Controls */}
-      <div className="answer-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span className="category-badge">
-            <Scale size={13} />
-            {answer.category || 'Indian Law'}
-          </span>
-          {latencyMs > 0 && (
-            <span style={{ fontSize: '0.72rem', color: '#8899af' }}>
-              {(latencyMs / 1000).toFixed(1)}s • {model}
-            </span>
-          )}
-        </div>
-
-        <div className="card-actions">
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={handleCopyText}
-            title="Copy legal summary as plain text"
-            style={{ fontSize: '0.78rem', padding: '6px 10px' }}
-          >
-            {copied ? (
-              <>
-                <Check size={14} color="#10b981" /> Copied!
-              </>
-            ) : (
-              <>
-                <Copy size={14} /> Copy Summary
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={handlePrint}
-            title="Print or Save as PDF"
-            style={{ fontSize: '0.78rem', padding: '6px 10px' }}
-          >
-            <Printer size={14} /> Print / PDF
-          </button>
-        </div>
-      </div>
-
-      {/* 1. Problem in Short */}
-      <div>
-        <div className="card-section-title">
-          <Info size={13} /> Problem in Short
-        </div>
-        <h3 className="problem-short-text">
-          {answer.problem_summary}
-        </h3>
-      </div>
-
-      {/* In Plain Words */}
-      {answer.plain_explanation && (
-        <div>
-          <div className="card-section-title">
-            <FileCheck2 size={13} /> In Plain Words
-          </div>
-          <div className="plain-explanation-box">
-            {answer.plain_explanation}
-          </div>
+    <article className="claude-answer-container" id="legal-answer-card">
+      {/* Category Pill & Problem Title */}
+      {problemTitle && (
+        <div className="answer-topic-header">
+          <span className="topic-category-badge">{category}</span>
+          <h2 className="topic-title font-serif">{problemTitle}</h2>
         </div>
       )}
 
-      {/* 4. What To Do Next (Numbered Steps) */}
-      {answer.next_steps && answer.next_steps.length > 0 && (
-        <div>
-          <div className="card-section-title">
-            <Clock size={13} /> What To Do Next (Step-by-Step Action)
-          </div>
-          <div className="next-steps-list">
-            {answer.next_steps.map((step, idx) => (
-              <div key={idx} className="step-card">
-                <div className="step-number">{idx + 1}</div>
-                <div className="step-content">
-                  <div className="step-title">{step.title}</div>
-                  <div className="step-detail">{step.detail}</div>
+      {/* 1. In Plain Words (Executive Editorial Summary) */}
+      {summaryText && (
+        <div className="editorial-summary-prose">
+          <ReactMarkdown>{summaryText}</ReactMarkdown>
+        </div>
+      )}
+
+      {/* 2. Structured Legal Explanation Points */}
+      {explanationPoints.length > 0 && (
+        <div className="editorial-explanation-section">
+          <h3 className="section-subheading">Legal Analysis</h3>
+          <ul className="explanation-bullet-list">
+            {explanationPoints.map((point, idx) => (
+              <li key={idx} className="explanation-bullet-item">
+                <ReactMarkdown>{point}</ReactMarkdown>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 3. Expandable Legal Source References (Statutory Citations) */}
+      {statutoryCitations.length > 0 && (
+        <div className="sources-collapsible-block">
+          <button
+            type="button"
+            className="sources-header-toggle"
+            onClick={() => setSourcesExpanded((prev) => !prev)}
+            aria-expanded={sourcesExpanded}
+          >
+            <div className="sources-header-left">
+              <BookOpen size={16} className="sources-icon" />
+              <span className="sources-header-title">
+                Sources & Statutory Provisions ({statutoryCitations.length})
+              </span>
+            </div>
+            {sourcesExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {sourcesExpanded && (
+            <div className="sources-content-list">
+              {statutoryCitations.map((item, idx) => {
+                const queryParam = encodeURIComponent(`${item.act || ''} ${item.section || ''}`);
+                const indiaCodeUrl = `https://www.indiacode.nic.in/handle/123456789/1362/simple-search?query=${queryParam}`;
+                const isQuoteOpen = expandedCitationIndex === idx;
+
+                return (
+                  <div key={idx} className="source-reference-card">
+                    <div className="source-card-main">
+                      <div className="source-title-row">
+                        <span className="source-act-name">{item.act}</span>
+                        {item.section && <span className="source-section-pill">{item.section}</span>}
+                      </div>
+
+                      {item.title && <div className="source-section-title">{item.title}</div>}
+
+                      {item.supporting_text && (
+                        <div>
+                          <button
+                            type="button"
+                            className="btn-toggle-quote"
+                            onClick={() =>
+                              setExpandedCitationIndex(isQuoteOpen ? null : idx)
+                            }
+                          >
+                            <span>{isQuoteOpen ? 'Hide statutory excerpt' : 'View statutory excerpt'}</span>
+                            {isQuoteOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                          </button>
+
+                          {isQuoteOpen && (
+                            <blockquote className="source-verbatim-quote">
+                              "{item.supporting_text}"
+                            </blockquote>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <a
+                      href={indiaCodeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="source-verify-link"
+                      title="Verify on official India Code repository"
+                    >
+                      <span>Verify on India Code</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. Judgment Presentation Cards */}
+      {judgments.length > 0 && (
+        <div className="judgment-section">
+          <h3 className="section-subheading">
+            <Scale size={16} className="inline-icon" /> Relevant Court Precedents
+          </h3>
+          <div className="judgments-grid">
+            {judgments.map((j, idx) => (
+              <div key={idx} className="judgment-card">
+                <div className="judgment-card-header">
+                  <div className="judgment-title">{j.title || j.act || 'Court Precedent'}</div>
+                  <span className="judgment-badge">Precedent</span>
+                </div>
+
+                <div className="judgment-meta-row">
+                  <span className="judgment-court">{j.act || 'High Court of India'}</span>
+                  {j.section && <span className="judgment-case-no">{j.section}</span>}
+                </div>
+
+                {j.supporting_text && (
+                  <p className="judgment-excerpt">
+                    "{j.supporting_text}"
+                  </p>
+                )}
+
+                <div className="judgment-card-footer">
+                  <span className="judgment-ref-tag">
+                    <FileText size={12} /> Legal Reference
+                  </span>
+                  <a
+                    href={`https://indiankanoon.org/search/?formInput=${encodeURIComponent(j.title || j.act)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="judgment-link"
+                  >
+                    <span>View Judgment Record</span>
+                    <ExternalLink size={12} />
+                  </a>
                 </div>
               </div>
             ))}
@@ -208,48 +279,25 @@ export default function LegalAnswerCard({ answer, latencyMs = 0, model = 'Nemotr
         </div>
       )}
 
-      {/* 5. Where To Go (Forum - 3 small boxes) */}
-      {answer.forum && (
-        <div>
-          <div className="card-section-title">
-            <Building2 size={13} /> Where To Go (Forum & Costs)
-          </div>
-          <div className="forum-grid">
-            <div className="forum-box">
-              <span className="forum-box-label">Concerned Office / Forum</span>
-              <span className="forum-box-value">{answer.forum.office || 'Designated Office'}</span>
-            </div>
-            <div className="forum-box">
-              <span className="forum-box-label">Statutory / Court Fee</span>
-              <span className="forum-box-value">{answer.forum.fee || 'Nominal / Nil'}</span>
-            </div>
-            <div className="forum-box">
-              <span className="forum-box-label">Likely Timeframe</span>
-              <span className="forum-box-value">{answer.forum.likely_time || 'Case dependent'}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 5. What To Do Next (Step-by-Step Action Plan) */}
+      {nextStepsActions.length > 0 && (
+        <div className="action-plan-section">
+          <h3 className="section-subheading">
+            <Clock size={16} className="inline-icon" /> What To Do Next
+          </h3>
+          <div className="action-steps-list">
+            {nextStepsActions.map((step, idx) => {
+              const stepNumber = step.step || idx + 1;
+              const title = step.title || `Step ${stepNumber}`;
+              const description = step.description || step.detail || '';
 
-      {/* 6. Papers To Keep Ready (Interactive Checklist) */}
-      {answer.documents_needed && answer.documents_needed.length > 0 && (
-        <div>
-          <div className="card-section-title">
-            <Receipt size={13} /> Papers to Keep Ready (Checklist)
-          </div>
-          <div className="papers-checklist">
-            {answer.documents_needed.map((doc, idx) => {
-              const isChecked = !!checkedDocs[idx];
               return (
-                <div
-                  key={idx}
-                  className={`checklist-item ${isChecked ? 'checked' : ''}`}
-                  onClick={() => toggleDoc(idx)}
-                >
-                  <div className="checklist-checkbox">
-                    {isChecked && <Check size={12} />}
+                <div key={idx} className="action-step-item">
+                  <div className="action-step-num">{stepNumber}</div>
+                  <div className="action-step-body">
+                    <div className="action-step-title">{title}</div>
+                    <div className="action-step-desc">{description}</div>
                   </div>
-                  <span className="checklist-text">{doc}</span>
                 </div>
               );
             })}
@@ -257,59 +305,106 @@ export default function LegalAnswerCard({ answer, latencyMs = 0, model = 'Nemotr
         </div>
       )}
 
-      {/* 7. Timeline (Horizontal on desktop) */}
-      {answer.timeline && answer.timeline.length > 0 && (
-        <div>
-          <div className="card-section-title">
-            <CalendarDays size={13} /> Expected Timeline
+      {/* 6. Crucial Warnings & Legal Notes */}
+      {(warningsList.length > 0 || limitationsList.length > 0) && (
+        <div className="editorial-callout-warning">
+          <div className="callout-header">
+            <AlertTriangle size={15} />
+            <span>Important Warnings & Limitations</span>
           </div>
-          <div className="timeline-horizontal">
-            {answer.timeline.map((item, idx) => (
-              <div key={idx} className="timeline-step">
-                <span className="timeline-when">{item.when}</span>
-                <span className="timeline-what">{item.what}</span>
+
+          <div className="callout-body">
+            {warningsList.map((warning, idx) => {
+              const msg = typeof warning === 'string' ? warning : warning.message || '';
+              return (
+                <div key={`w-${idx}`} className="callout-item">
+                  <span className="callout-bullet">•</span>
+                  <span>{msg}</span>
+                </div>
+              );
+            })}
+
+            {limitationsList.map((limitation, idx) => (
+              <div key={`l-${idx}`} className="callout-item limitation">
+                <span className="callout-bullet">*</span>
+                <span>{limitation}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* 8. Warnings (Highlighted alert box) */}
-      {answer.warnings && answer.warnings.length > 0 && (
-        <div className="warnings-box">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase' }}>
-            <AlertTriangle size={15} /> Crucial Warnings & Limitations
-          </div>
-          {answer.warnings.map((warning, idx) => (
-            <div key={idx} className="warning-item">
-              <span style={{ color: '#ef4444' }}>•</span>
-              <span>{warning}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* 7. Subtle Response Actions Bar (Claude Style) */}
+      <div className="response-actions-bar">
+        <div className="actions-group-left">
+          {/* Copy Response */}
+          <button
+            type="button"
+            className="action-pill-btn"
+            onClick={handleCopyText}
+            title="Copy response to clipboard"
+          >
+            {copied ? (
+              <>
+                <Check size={14} color="#10b981" />
+                <span>Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy size={14} />
+                <span>Copy</span>
+              </>
+            )}
+          </button>
 
-      {/* 9. Disclaimer */}
-      {answer.disclaimer && (
-        <div className="disclaimer-text">
-          {answer.disclaimer}
-        </div>
-      )}
+          {/* Regenerate Response */}
+          {onRegenerate && (
+            <button
+              type="button"
+              className="action-pill-btn"
+              onClick={onRegenerate}
+              title="Regenerate this response"
+            >
+              <RotateCcw size={14} />
+              <span>Retry</span>
+            </button>
+          )}
 
-      {/* 10. Official Verification Banner */}
-      <div className="official-banner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldAlert size={16} color="#f59e0b" style={{ flexShrink: 0 }} />
-          <span>AI-generated, not verified against official sources. Check the sections on indiacode.nic.in or with a lawyer.</span>
+          {/* Print / PDF */}
+          <button
+            type="button"
+            className="action-pill-btn"
+            onClick={handlePrint}
+            title="Print or export as PDF"
+          >
+            <Printer size={14} />
+            <span>Print</span>
+          </button>
         </div>
-        <a
-          href="https://www.indiacode.nic.in"
-          target="_blank"
-          rel="noreferrer"
-          style={{ whiteSpace: 'nowrap' }}
-        >
-          India Code Portal <ExternalLink size={12} style={{ display: 'inline' }} />
-        </a>
+
+        <div className="actions-group-right">
+          {/* Helpful Feedback */}
+          <button
+            type="button"
+            className={`feedback-btn ${feedback === 'helpful' ? 'active-good' : ''}`}
+            onClick={() => handleFeedback('helpful')}
+            title="Helpful response"
+            aria-label="Thumbs up"
+          >
+            <ThumbsUp size={14} />
+          </button>
+
+          {/* Not Helpful Feedback */}
+          <button
+            type="button"
+            className={`feedback-btn ${feedback === 'unhelpful' ? 'active-bad' : ''}`}
+            onClick={() => handleFeedback('unhelpful')}
+            title="Needs improvement"
+            aria-label="Thumbs down"
+          >
+            <ThumbsDown size={14} />
+          </button>
+        </div>
       </div>
     </article>
   );

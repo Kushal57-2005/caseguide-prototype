@@ -7,7 +7,8 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Scale, Lock, Mail, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import logoImg from '../assets/logo.jpg';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function AuthModal({ isOpen = true }) {
   const { login, register } = useAuth();
@@ -49,8 +50,8 @@ export default function AuthModal({ isOpen = true }) {
     <div className="auth-overlay">
       <div className="auth-modal">
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div className="brand-logo" style={{ width: '48px', height: '48px', margin: '0 auto 12px auto' }}>
-            <Scale size={24} color="#f59e0b" />
+          <div className="brand-logo" style={{ width: '56px', height: '56px', margin: '0 auto 12px auto' }}>
+            <img src={logoImg} alt="caseGuide" className="brand-logo-img" />
           </div>
           <h2 style={{ fontSize: '1.6rem', color: '#ffffff', marginBottom: '4px' }}>
             case<span>Guide</span>

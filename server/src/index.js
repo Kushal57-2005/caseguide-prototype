@@ -20,8 +20,8 @@ async function bootstrap() {
       console.log(`===============================================`);
       console.log(`⚖️  caseGuide AI Legal Assistant Backend Started`);
       console.log(`📡 URL: http://localhost:${config.port}`);
-      console.log(`🤖 LLM Provider: NVIDIA NIM (${config.nvidiaModel})`);
-      console.log(`🛠️  Mock Mode: ${config.mockLlm ? 'ENABLED (Offline Safe)' : 'DISABLED (Live NVIDIA API)'}`);
+      console.log(`🧠 AI Microservice: FastAPI RAG (${config.aiServiceUrl})`);
+      console.log(`🛠️  Mock Mode: ${config.mockLlm ? 'ENABLED (Offline Mock)' : 'DISABLED (Live FastAPI RAG)'}`);
       console.log(`===============================================`);
     });
 

@@ -25,7 +25,17 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    // Structured JSON response matching caseGuide legal answer schema
+    // Complete structured response from FastAPI RAG service
+    structuredResponse: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
+    },
+    // RAG processing status (e.g. ANSWERED, PARTIAL_ANSWER, INSUFFICIENT_EVIDENCE)
+    status: {
+      type: String,
+      default: null
+    },
+    // Backward-compatible structured answer field
     answer: {
       type: mongoose.Schema.Types.Mixed,
       default: null

@@ -28,6 +28,12 @@ export const config = {
   nvidiaModel: process.env.NVIDIA_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b',
   enableThinking: process.env.ENABLE_THINKING === 'true',
   
-  // Mock mode for local testing without active NVIDIA key
-  mockLlm: process.env.MOCK_LLM === 'true' || !process.env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY === 'your_nvidia_api_key_here'
+  // FastAPI RAG AI Microservice Configuration
+  aiServiceUrl: process.env.AI_SERVICE_URL || 'https://caseguide-fastapi-backend.onrender.com',
+  aiServiceTimeoutMs: parseInt(process.env.AI_SERVICE_TIMEOUT_MS || '60000', 10),
+  aiServiceApiKey: process.env.AI_SERVICE_API_KEY || '',
+  adminApiKey: process.env.ADMIN_API_KEY || 'caseguide_admin_secret_key',
+
+  // Mock mode for local testing without active external services
+  mockLlm: process.env.MOCK_LLM === 'true'
 };

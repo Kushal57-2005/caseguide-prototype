@@ -1,21 +1,28 @@
 /**
  * @file Sidebar.jsx
- * @description Sidebar navigation displaying past legal consultations, new chat creation, inline rename, and user logout.
- * @inputs Props { chats, currentChatId, onSelectChat, onNewChat, onRenameChat, onDeleteChat, isOpen, onClose }
- * @outputs Collapsible sidebar container with reactive chat history list.
+ * @description Claude-inspired minimalist left sidebar for CaseGuide:
+ * - Logo & CaseGuide Wordmark
+ * - Search filter for recent conversations
+ * - Clean conversation list with active indicators & contextual menus
+ * - User profile, Settings modal trigger (theme switcher), and logout
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
+import logoImg from '../assets/logo.jpg';
 import {
-  Scale,
-  Plus,
-  MessageSquare,
+  SquarePen,
+  Search,
+  MoreHorizontal,
   Edit2,
   Trash2,
-  LogOut,
-  X,
-  Check
+  Settings,
+  PanelLeftClose,
+  Sun,
+  Moon,
+  Check,
+  X
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -26,20 +33,33 @@ export default function Sidebar({
   onRenameChat,
   onDeleteChat,
   isOpen = false,
-  onClose
+  onClose,
+  onOpenSettings
 }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
+
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
+  const [menuOpenId, setMenuOpenId] = useState(null);
+
+  // Filter chats by search query
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) return chats;
+    const q = searchQuery.toLowerCase();
+    return chats.filter((c) => (c.title || '').toLowerCase().includes(q));
+  }, [chats, searchQuery]);
 
   const startRename = (chat, e) => {
     e.stopPropagation();
     setEditingId(chat._id);
-    setEditTitle(chat.title);
+    setEditTitle(chat.title || '');
+    setMenuOpenId(null);
   };
 
   const saveRename = async (chatId, e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     if (editTitle.trim()) {
       await onRenameChat(chatId, editTitle.trim());
     }
@@ -56,135 +76,220 @@ export default function Sidebar({
 
   const handleDelete = (chatId, e) => {
     e.stopPropagation();
-    if (window.confirm('Delete this legal query and all its messages?')) {
+    setMenuOpenId(null);
+    if (window.confirm('Delete this conversation?')) {
       onDeleteChat(chatId);
     }
   };
 
+  const toggleThemeQuick = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+  };
+
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      {/* Sidebar Header */}
+    <aside className={`claude-sidebar ${isOpen ? 'open' : ''}`}>
+      {/* 1. Sidebar Header */}
       <div className="sidebar-header">
-        <div className="brand-badge">
+        <div className="brand-badge" onClick={onNewChat} style={{ cursor: 'pointer' }}>
           <div className="brand-logo">
-            <Scale size={20} />
+            <img src={logoImg} alt="CaseGuide" className="brand-logo-img" />
           </div>
-          <div className="brand-title">
-            case<span>Guide</span>
-          </div>
+          <span className="brand-wordmark font-serif">CaseGuide</span>
         </div>
-        {onClose && (
-          <button className="btn-icon" onClick={onClose} aria-label="Close sidebar">
-            <X size={18} />
+
+        <div className="sidebar-header-actions">
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onNewChat}
+            title="New Chat"
+            aria-label="New chat"
+          >
+            <SquarePen size={18} />
           </button>
-        )}
+
+          {onClose && (
+            <button
+              type="button"
+              className="btn-icon mobile-only"
+              onClick={onClose}
+              title="Close Sidebar"
+              aria-label="Close sidebar"
+            >
+              <PanelLeftClose size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* New Consultation Button */}
-      <div className="sidebar-action-wrap">
+      {/* 2. New Chat Full Button & Search */}
+      <div className="sidebar-top-section">
         <button
-          className="btn-gold"
+          type="button"
+          className="btn-new-chat"
           onClick={onNewChat}
-          style={{ width: '100%', fontSize: '0.9rem' }}
+          title="Start a new legal research session"
         >
-          <Plus size={18} />
-          New Consultation
+          <SquarePen size={16} />
+          <span>New Chat</span>
         </button>
+
+        <div className="sidebar-search-wrap">
+          <Search size={14} className="search-icon" />
+          <input
+            type="text"
+            className="sidebar-search-input"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search conversations"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="btn-search-clear"
+              onClick={() => setSearchQuery('')}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Chat History List */}
-      <div className="chat-history-list">
-        {chats.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '30px 10px', color: '#8899af', fontSize: '0.85rem' }}>
-            No previous chats yet.<br />Ask a legal question to begin!
+      {/* 3. Conversation History List */}
+      <div className="sidebar-nav-scroll">
+        <div className="nav-section-label">Recent Research</div>
+
+        {filteredChats.length === 0 ? (
+          <div className="sidebar-empty-state">
+            {searchQuery ? 'No matching queries found.' : 'No conversations yet.'}
           </div>
         ) : (
-          chats.map((chat) => {
-            const isActive = chat._id === currentChatId;
-            const isEditing = editingId === chat._id;
+          <div className="conversation-list">
+            {filteredChats.map((chat) => {
+              const isActive = chat._id === currentChatId;
+              const isEditing = editingId === chat._id;
+              const isMenuOpen = menuOpenId === chat._id;
 
-            return (
-              <div
-                key={chat._id}
-                className={`chat-item ${isActive ? 'active' : ''}`}
-                onClick={() => onSelectChat(chat._id)}
-              >
-                <MessageSquare size={16} style={{ flexShrink: 0, marginRight: '8px', opacity: isActive ? 1 : 0.6 }} />
-
-                {isEditing ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }} onClick={e => e.stopPropagation()}>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ padding: '3px 6px', fontSize: '0.82rem', height: '26px' }}
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(chat._id, e)}
-                      autoFocus
-                    />
-                    <button
-                      className="btn-icon"
-                      style={{ padding: '2px' }}
-                      onClick={(e) => saveRename(chat._id, e)}
-                    >
-                      <Check size={14} color="#10b981" />
-                    </button>
-                    <button
-                      className="btn-icon"
-                      style={{ padding: '2px' }}
-                      onClick={() => setEditingId(null)}
-                    >
-                      <X size={14} color="#ef4444" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="chat-title-text" title={chat.title}>
-                      {chat.title}
-                    </span>
-                    <div className="chat-item-actions">
+              return (
+                <div
+                  key={chat._id}
+                  className={`conversation-item ${isActive ? 'active' : ''}`}
+                  onClick={() => onSelectChat(chat._id)}
+                >
+                  {isEditing ? (
+                    <div className="rename-row" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        className="rename-input"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(chat._id, e)}
+                        autoFocus
+                      />
                       <button
-                        className="btn-icon"
-                        title="Rename chat"
-                        onClick={(e) => startRename(chat, e)}
+                        type="button"
+                        className="btn-rename-save"
+                        onClick={(e) => saveRename(chat._id, e)}
+                        title="Save title"
                       >
-                        <Edit2 size={13} />
+                        <Check size={14} />
                       </button>
                       <button
-                        className="btn-icon"
-                        title="Delete chat"
-                        onClick={(e) => handleDelete(chat._id, e)}
+                        type="button"
+                        className="btn-rename-cancel"
+                        onClick={() => setEditingId(null)}
+                        title="Cancel"
                       >
-                        <Trash2 size={13} color="#f87171" />
+                        <X size={14} />
                       </button>
                     </div>
-                  </>
-                )}
-              </div>
-            );
-          })
+                  ) : (
+                    <>
+                      <span className="conversation-title" title={chat.title}>
+                        {chat.title || 'Legal Query'}
+                      </span>
+
+                      {/* Three-dot context menu */}
+                      <div
+                        className="conversation-actions"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          className="btn-context-menu"
+                          onClick={() => setMenuOpenId(isMenuOpen ? null : chat._id)}
+                          aria-label="Options"
+                        >
+                          <MoreHorizontal size={15} />
+                        </button>
+
+                        {isMenuOpen && (
+                          <div className="context-dropdown">
+                            <button
+                              type="button"
+                              className="dropdown-item"
+                              onClick={(e) => startRename(chat, e)}
+                            >
+                              <Edit2 size={13} />
+                              <span>Rename</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="dropdown-item danger"
+                              onClick={(e) => handleDelete(chat._id, e)}
+                            >
+                              <Trash2 size={13} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {/* User Footer */}
-      <div className="sidebar-footer">
-        <div className="user-profile">
-          <div className="user-avatar">
-            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'U'}
+      {/* 4. Bottom User Profile & Settings Section */}
+      <div className="sidebar-bottom-section">
+        {user && (
+          <div className="user-profile-row">
+            <div className="user-avatar-pill">
+              {(user.name || user.email || 'U')[0].toUpperCase()}
+            </div>
+            <div className="user-info-text">
+              <span className="user-name">{user.name || 'Citizen User'}</span>
+              <span className="user-role">Legal Research</span>
+            </div>
+
+            {/* Quick theme switcher button */}
+            <button
+              type="button"
+              className="btn-icon subtle"
+              onClick={toggleThemeQuick}
+              title={`Switch theme (currently ${theme})`}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
+
+            {/* Settings button */}
+            <button
+              type="button"
+              className="btn-icon subtle"
+              onClick={onOpenSettings}
+              title="Settings"
+              aria-label="Settings"
+            >
+              <Settings size={16} />
+            </button>
           </div>
-          <div className="user-meta">
-            <div className="user-name">{user?.name || 'Citizen'}</div>
-            <div className="user-email">{user?.email || ''}</div>
-          </div>
-        </div>
-        <button
-          className="btn-icon"
-          title="Sign Out"
-          onClick={logout}
-          style={{ color: '#f87171' }}
-        >
-          <LogOut size={16} />
-        </button>
+        )}
       </div>
     </aside>
   );

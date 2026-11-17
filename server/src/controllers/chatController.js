@@ -7,7 +7,9 @@
 
 import { Chat } from '../models/Chat.js';
 import { Message } from '../models/Message.js';
+import { aiService, AIServiceError } from '../services/aiService.js';
 import { generateLegalAdvice } from '../services/llm.js';
+import { config } from '../config/env.js';
 
 /**
  * Get all chats for the logged in user
@@ -153,13 +155,13 @@ export async function getMessages(req, res, next) {
 /**
  * Ask a legal question inside a chat
  * POST /api/chats/:id/ask
- * Body: { question: string }
+ * Body: { question: string, retryMessageId?: string }
  */
 export async function askQuestion(req, res, next) {
   const startTime = Date.now();
   try {
     const { id } = req.params;
-    const { question } = req.body;
+    const { question, retryMessageId } = req.body;
 
     if (!question || typeof question !== 'string' || !question.trim()) {
       return res.status(400).json({
@@ -178,7 +180,7 @@ export async function askQuestion(req, res, next) {
       });
     }
 
-    // Verify chat exists and belongs to user
+    // 1. Authenticate user and verify chat ownership
     const chat = await Chat.findOne({ _id: id, userId: req.user._id });
     if (!chat) {
       return res.status(404).json({
@@ -187,58 +189,154 @@ export async function askQuestion(req, res, next) {
       });
     }
 
-    // Retrieve prior message history for context
-    const previousMessages = await Message.find({ chatId: id })
-      .sort({ createdAt: 1 })
-      .lean();
+    // 2. Manage user message: reuse existing message on retry or create new
+    let userMessage;
+    let isRetry = false;
 
-    // 1. Save user question message
-    const userMessage = await Message.create({
-      chatId: id,
-      role: 'user',
-      content: trimmedQuestion
-    });
+    if (retryMessageId) {
+      userMessage = await Message.findOne({ _id: retryMessageId, chatId: id, role: 'user' });
+      if (userMessage) {
+        isRetry = true;
+      }
+    }
 
-    let llmResult;
-    try {
-      // 2. Call LLM service
-      llmResult = await generateLegalAdvice({
-        question: trimmedQuestion,
-        history: previousMessages
-      });
-    } catch (llmError) {
-      // Record failed assistant message if wanted, or return clear error
-      const latencyMs = Date.now() - startTime;
-      await Message.create({
+    if (!userMessage) {
+      userMessage = await Message.create({
         chatId: id,
-        role: 'assistant',
-        content: llmError.message || 'Error communicating with legal model.',
-        model: 'Nemotron',
-        latencyMs,
-        error: llmError.message
-      });
-
-      return res.status(llmError.statusCode || 500).json({
-        success: false,
-        message: llmError.message || 'Failed to generate legal response.',
-        canRetry: true
+        role: 'user',
+        content: trimmedQuestion
       });
     }
 
-    // 3. Save structured assistant message
+    // 3. Retrieve recent conversation history from MongoDB (excluding current user message)
+    const previousMessages = await Message.find({
+      chatId: id,
+      _id: { $ne: userMessage._id }
+    })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    const conversationHistory = previousMessages.map((msg) => ({
+      role: msg.role,
+      content: msg.role === 'assistant'
+        ? (msg.structuredResponse?.answer?.summary || msg.answer?.plain_explanation || msg.content)
+        : msg.content
+    }));
+
+    let ragResponse;
+    let modelName = 'NVIDIA Nemotron RAG';
+
+    try {
+      if (config.mockLlm) {
+        // Mock fallback for unit tests and offline development
+        const mockResult = await generateLegalAdvice({
+          question: trimmedQuestion,
+          history: previousMessages
+        });
+
+        const mockAnswer = mockResult.answer || {};
+        ragResponse = {
+          query: {
+            original_query: trimmedQuestion,
+            refined_query: trimmedQuestion,
+            plain_language_query: trimmedQuestion
+          },
+          problem_summary: {
+            title: mockAnswer.problem_summary || 'Legal Grievance',
+            category: mockAnswer.category || 'General Legal',
+            description: mockAnswer.plain_explanation || trimmedQuestion
+          },
+          answer: {
+            summary: mockAnswer.plain_explanation || 'Legal assessment provided.',
+            explanation: (mockAnswer.next_steps || []).map(s => `${s.title}: ${s.detail}`)
+          },
+          citations: (mockAnswer.legal_match || []).map((m, idx) => ({
+            citation_id: `citation_${idx + 1}`,
+            act: m.name,
+            section: m.reference,
+            title: m.name,
+            supporting_text: m.why_it_applies,
+            source_id: 'mock_doc',
+            file_name: 'Indian_Statutes.pdf',
+            page_number: 1
+          })),
+          retrieval: {
+            total_chunks_retrieved: 0,
+            chunks: []
+          },
+          next_steps: {
+            actions: (mockAnswer.next_steps || []).map((s, idx) => ({
+              step: idx + 1,
+              title: s.title,
+              description: s.detail,
+              source_ids: [],
+              source_pages: [],
+              source_type: 'RAG_AND_LLM'
+            }))
+          },
+          warnings: (mockAnswer.warnings || []).map(w => ({
+            type: 'LEGAL_CAUTION',
+            message: w
+          })),
+          limitations: [],
+          metadata: {
+            status: 'ANSWERED',
+            model: mockResult.model || 'Nemotron Mock',
+            retrieval_method: 'Mock RAG',
+            top_k: 5
+          }
+        };
+        modelName = mockResult.model || 'Nemotron Mock';
+      } else {
+        // Call external FastAPI RAG microservice
+        ragResponse = await aiService.sendLegalChat({
+          question: trimmedQuestion,
+          top_k: 5,
+          document_id: null,
+          conversationHistory
+        });
+        modelName = ragResponse.metadata?.model || 'nvidia/nemotron';
+      }
+    } catch (aiError) {
+      // If AI fails and this was a newly created user message, roll it back to prevent duplicate messages upon retry
+      if (!isRetry && userMessage) {
+        await Message.findByIdAndDelete(userMessage._id).catch(() => {});
+      }
+
+      const statusCode = aiError.statusCode || 500;
+      return res.status(statusCode).json({
+        success: false,
+        message: aiError.message || 'Legal AI microservice failed to process request.',
+        canRetry: true,
+        question: trimmedQuestion
+      });
+    }
+
+    const latencyMs = Date.now() - startTime;
+
+    // 4. Save complete structured assistant response in MongoDB
     const assistantMessage = await Message.create({
       chatId: id,
       role: 'assistant',
-      content: llmResult.answer.plain_explanation || trimmedQuestion,
-      answer: llmResult.answer,
-      model: llmResult.model,
-      latencyMs: llmResult.latencyMs,
-      error: llmResult.error
+      content: ragResponse.answer?.summary || ragResponse.problem_summary?.description || trimmedQuestion,
+      structuredResponse: ragResponse,
+      status: ragResponse.metadata?.status || 'ANSWERED',
+      answer: {
+        ...ragResponse,
+        // Preserve legacy fields for backward compatibility with existing tests and UI
+        in_scope: ragResponse.metadata?.status !== 'OUT_OF_SCOPE',
+        category: ragResponse.problem_summary?.category || 'General',
+        problem_summary: ragResponse.problem_summary?.title || ragResponse.problem_summary?.description,
+        plain_explanation: ragResponse.answer?.summary
+      },
+      model: modelName,
+      latencyMs,
+      error: null
     });
 
-    // 4. Update Chat title if it's currently generic/new
+    // 5. Update Chat title if it's currently generic/new
     if (chat.title === 'New Legal Query' || previousMessages.length === 0) {
-      const summary = llmResult.answer.problem_summary || trimmedQuestion;
+      const summary = ragResponse.problem_summary?.title || trimmedQuestion;
       const cleanTitle = summary
         .split(' ')
         .slice(0, 7)

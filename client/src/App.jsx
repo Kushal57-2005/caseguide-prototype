@@ -12,6 +12,7 @@ import AuthModal from './components/AuthModal.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ChatView from './components/ChatView.jsx';
 import SettingsModal from './components/SettingsModal.jsx';
+import ConfirmModal from './components/ConfirmModal.jsx';
 import { api } from './services/api.js';
 import logoImg from './assets/logo.jpg';
 
@@ -25,6 +26,8 @@ function MainApp() {
   const [lastQuestion, setLastQuestion] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteModalChat, setDeleteModalChat] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const hasInitializedRef = useRef(false);
   const isSubmittingChatIdRef = useRef(null);
 
@@ -129,12 +132,21 @@ function MainApp() {
         setChats(prev => prev.map(c => c._id === chatId ? { ...c, title: res.chat.title || newTitle } : c));
       }
     } catch (err) {
-      alert(`Could not rename conversation: ${err.message}`);
+      setError(`Could not rename conversation: ${err.message}`);
     }
   };
 
-  // Delete a chat
-  const handleDeleteChat = async (chatId) => {
+  // Request delete confirmation via custom modal popup
+  const handleRequestDelete = (chat) => {
+    const chatObj = typeof chat === 'object' && chat !== null ? chat : chats.find(c => c._id === chat);
+    setDeleteModalChat(chatObj || { _id: chat, title: 'this conversation' });
+  };
+
+  // Perform actual chat deletion from database and state
+  const handleConfirmDelete = async () => {
+    if (!deleteModalChat?._id || isDeleting) return;
+    const chatId = deleteModalChat._id;
+    setIsDeleting(true);
     try {
       const res = await api.chats.delete(chatId);
       if (res.success) {
@@ -147,9 +159,12 @@ function MainApp() {
             handleNewChat();
           }
         }
+        setDeleteModalChat(null);
       }
     } catch (err) {
-      alert(`Could not delete conversation: ${err.message}`);
+      setError(`Could not delete conversation: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -270,7 +285,7 @@ function MainApp() {
         }}
         onNewChat={handleNewChat}
         onRenameChat={handleRenameChat}
-        onDeleteChat={handleDeleteChat}
+        onDeleteChat={handleRequestDelete}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onOpenSettings={() => setSettingsOpen(true)}
@@ -301,6 +316,20 @@ function MainApp() {
         onDomainChange={setResearchDomain}
         researchMode={researchMode}
         onModeChange={setResearchMode}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deleteModalChat)}
+        title="Delete conversation?"
+        itemName={deleteModalChat?.title || ''}
+        message="This will permanently delete this conversation and its entire message history. This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        loading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => !isDeleting && setDeleteModalChat(null)}
       />
     </div>
   );

@@ -74,12 +74,10 @@ export default function Sidebar({
     }
   };
 
-  const handleDelete = (chatId, e) => {
+  const handleDelete = (chat, e) => {
     e.stopPropagation();
     setMenuOpenId(null);
-    if (window.confirm('Delete this conversation?')) {
-      onDeleteChat(chatId);
-    }
+    onDeleteChat(chat);
   };
 
   const toggleThemeQuick = () => {
@@ -238,7 +236,7 @@ export default function Sidebar({
                             <button
                               type="button"
                               className="dropdown-item danger"
-                              onClick={(e) => handleDelete(chat._id, e)}
+                              onClick={(e) => handleDelete(chat, e)}
                             >
                               <Trash2 size={13} />
                               <span>Delete</span>

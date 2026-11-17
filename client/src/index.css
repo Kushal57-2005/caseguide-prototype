@@ -2014,6 +2014,139 @@ button:disabled {
   color: var(--text-secondary);
 }
 
+/* Confirm Modal Popup */
+.confirm-modal {
+  width: 100%;
+  max-width: 410px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--shadow-popover);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 0.16s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirm-modal-header {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.confirm-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirm-modal-title-wrap h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-icon-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-icon-badge.danger {
+  background-color: var(--bg-danger-soft);
+  color: var(--text-danger);
+}
+
+.confirm-modal-body {
+  padding: 4px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirm-item-preview {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  border-radius: 7px;
+  word-break: break-word;
+}
+
+.confirm-modal-message {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.confirm-modal-footer {
+  padding: 12px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--bg-card-alt);
+}
+
+.btn-modal-cancel {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  transition: background-color 0.15s ease;
+}
+
+.btn-modal-cancel:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+}
+
+.btn-modal-confirm {
+  padding: 7px 16px;
+  border-radius: 7px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: #ffffff;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-modal-confirm.destructive {
+  background-color: #b91c1c;
+}
+
+.btn-modal-confirm.destructive:hover:not(:disabled) {
+  background-color: #991b1b;
+}
+
+.btn-modal-confirm.primary {
+  background-color: var(--primary-brand);
+}
+
+.btn-modal-confirm.primary:hover:not(:disabled) {
+  background-color: var(--primary-brand-dark);
+}
+
 /* ==========================================================================
    9. Auth Modal & Loading Shell
    ========================================================================== */

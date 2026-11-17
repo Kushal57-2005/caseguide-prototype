@@ -23,11 +23,11 @@ const SUGGESTED_PROMPTS = [
     query: "What is the penalty for driving without a valid driving licence or insurance under the Motor Vehicles Act?",
   },
   {
-    id: "challan",
-    title: "Disputing a Traffic e-Challan",
-    desc: "How can I dispute or challenge an incorrect traffic e-challan in court?",
+    id: "registration",
+    title: "Vehicle Registration & Transfer",
+    desc: "What are the legal rules for vehicle registration and transfer under the Motor Vehicles Act?",
     icon: Scale,
-    query: "How can I dispute or challenge an incorrect traffic e-challan in court?",
+    query: "What are the legal rules for vehicle registration and transfer under the Motor Vehicles Act?",
   },
   {
     id: "accident",

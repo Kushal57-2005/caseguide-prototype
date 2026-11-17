@@ -41,13 +41,80 @@ function createApiClient() {
 const apiClient = createApiClient();
 
 /**
- * Validates that the response payload matches the required StructuredRAGResponse schema
+ * Validates and normalizes response payloads from FastAPI, handling both
+ * StructuredRAGResponse and FallbackResponse ({ status: 'fallback', response: '...', sources: [] })
  */
-export function validateStructuredRAGResponse(data) {
+export function validateStructuredRAGResponse(data, originalQuestion = '') {
   if (!data || typeof data !== 'object') {
     throw new AIServiceError('Invalid response payload: expected an object.', 502);
   }
 
+  // 1. Detect and normalize FastAPI FallbackResponse ({ status: 'fallback', response: '...', sources: [] })
+  if (data.status === 'fallback' || (typeof data.response === 'string' && !data.answer)) {
+    const rawText = typeof data.response === 'string' ? data.response : '';
+    const rawSources = Array.isArray(data.sources) ? data.sources : [];
+
+    return {
+      query: {
+        original_query: originalQuestion || '',
+        refined_query: originalQuestion || '',
+        plain_language_query: originalQuestion || ''
+      },
+      problem_summary: {
+        title: 'Motor Vehicle Law Inquiry',
+        category: 'Motor Vehicle Law',
+        description: 'Notice regarding supported scope of legal inquiry'
+      },
+      answer: {
+        summary: rawText,
+        explanation: []
+      },
+      citations: rawSources.map((s, idx) => ({
+        citation_id: `src_${idx + 1}`,
+        act: s.act || s.title || s.name || 'Motor Vehicles Act, 1988',
+        section: s.section || '',
+        title: s.title || s.name || 'Statutory Source',
+        supporting_text: s.text || s.excerpt || s.supporting_text || '',
+        source_id: s.id || `doc_${idx + 1}`
+      })),
+      retrieval: {
+        total_chunks_retrieved: rawSources.length,
+        chunks: []
+      },
+      next_steps: {
+        actions: [
+          {
+            step: 1,
+            title: 'Provide Specific Details',
+            description: 'Include specific details such as vehicle type, traffic challan section, accident circumstances, or RTO jurisdiction.'
+          },
+          {
+            step: 2,
+            title: 'Explore Supported Topics',
+            description: 'Ask about traffic fines, driving licence rules, vehicle registration, accident compensation (MACT), or vehicle insurance claims.'
+          }
+        ]
+      },
+      warnings: [
+        {
+          type: 'SCOPE_NOTICE',
+          message: 'CaseGuide AI currently specializes in Indian Motor Vehicle Law (Motor Vehicles Act, 1988, Central Motor Vehicles Rules, and related road safety & accident compensation provisions).'
+        }
+      ],
+      limitations: [
+        'Detailed statutory citations require questions relating to Indian Motor Vehicle Law.'
+      ],
+      metadata: {
+        status: 'FALLBACK',
+        is_fallback: true,
+        model: 'nvidia/nemotron',
+        retrieval_method: 'FastAPI RAG Fallback',
+        top_k: 5
+      }
+    };
+  }
+
+  // 2. StructuredRAGResponse validation
   if (!data.query || typeof data.query !== 'object') {
     throw new AIServiceError('Invalid response payload: missing "query" block.', 502);
   }
@@ -211,7 +278,7 @@ export const aiService = {
 
     try {
       const response = await apiClient.post('/api/chat/', payload);
-      return validateStructuredRAGResponse(response.data);
+      return validateStructuredRAGResponse(response.data, question.trim());
     } catch (err) {
       throw handleAxiosError(err, 'legal query processing');
     }

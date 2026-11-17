@@ -313,6 +313,7 @@ export async function askQuestion(req, res, next) {
     }
 
     const latencyMs = Date.now() - startTime;
+    const isFallback = Boolean(ragResponse.metadata?.is_fallback || ragResponse.metadata?.status === 'FALLBACK');
 
     // 4. Save complete structured assistant response in MongoDB
     const assistantMessage = await Message.create({
@@ -324,10 +325,11 @@ export async function askQuestion(req, res, next) {
       answer: {
         ...ragResponse,
         // Preserve legacy fields for backward compatibility with existing tests and UI
-        in_scope: ragResponse.metadata?.status !== 'OUT_OF_SCOPE',
-        category: ragResponse.problem_summary?.category || 'General',
+        in_scope: !isFallback && ragResponse.metadata?.status !== 'OUT_OF_SCOPE',
+        category: ragResponse.problem_summary?.category || 'Motor Vehicle Law',
         problem_summary: ragResponse.problem_summary?.title || ragResponse.problem_summary?.description,
-        plain_explanation: ragResponse.answer?.summary
+        plain_explanation: ragResponse.answer?.summary,
+        is_fallback: isFallback
       },
       model: modelName,
       latencyMs,

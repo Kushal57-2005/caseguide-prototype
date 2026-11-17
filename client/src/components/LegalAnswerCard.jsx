@@ -29,12 +29,34 @@ import {
   FileText,
   Calendar,
   Share2,
-  Info
+  Info,
+  Compass,
+  ArrowRight
 } from 'lucide-react';
+
+const FALLBACK_MOTOR_VEHICLE_PROMPTS = [
+  {
+    title: 'Traffic Challan Penalties',
+    query: 'What are the statutory fines for driving without a helmet, dangerous driving, and jumping red lights under Section 194 of the Motor Vehicles Act?'
+  },
+  {
+    title: 'Disputing an e-Challan',
+    query: 'What is the procedure to dispute or challenge a wrong traffic e-challan before a Virtual Court or Traffic Police?'
+  },
+  {
+    title: 'Accident Claim (MACT)',
+    query: 'What is the procedure and limitation period to claim compensation for road accident injuries under Section 166 before the Motor Accidents Claims Tribunal (MACT)?'
+  },
+  {
+    title: 'Driving Licence Validity',
+    query: 'What is the grace period and renewal procedure for driving with an expired Driving Licence under the Motor Vehicles Act?'
+  }
+];
 
 export default function LegalAnswerCard({
   answer,
-  onRegenerate = null
+  onRegenerate = null,
+  onSelectPrompt = null
 }) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
@@ -191,6 +213,149 @@ export default function LegalAnswerCard({
   const handleFeedback = (val) => {
     setFeedback((prev) => (prev === val ? null : val));
   };
+
+  const isFallback =
+    Boolean(
+      rag.metadata?.is_fallback ||
+      rag.metadata?.status === 'FALLBACK' ||
+      rag.status === 'fallback' ||
+      answer?.is_fallback ||
+      answer?.status === 'fallback'
+    );
+
+  // Render Fallback Specialization Notice if low similarity or out-of-scope in FastAPI
+  if (isFallback) {
+    return (
+      <article className="claude-answer-container" id="legal-answer-card">
+        <div className="fallback-scope-card">
+          <div className="fallback-scope-header">
+            <Compass size={18} className="inline-icon" />
+            <span className="fallback-scope-badge">Scope & Specialization Notice</span>
+          </div>
+
+          <div className="editorial-summary-prose">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
+          </div>
+
+          {onSelectPrompt && (
+            <div className="fallback-suggestions-wrap">
+              <span className="fallback-suggestions-label">
+                Explore supported Motor Vehicle Law topics:
+              </span>
+              <div className="fallback-pills-grid">
+                {FALLBACK_MOTOR_VEHICLE_PROMPTS.map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="fallback-prompt-pill"
+                    onClick={() => onSelectPrompt(p.query)}
+                  >
+                    <span>{p.title}</span>
+                    <ArrowRight size={13} className="pill-arrow" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {nextStepsActions.length > 0 && (
+            <div className="action-plan-section" style={{ marginTop: '4px' }}>
+              <h3 className="section-subheading">
+                <Clock size={15} className="inline-icon" /> What To Do Next
+              </h3>
+              <div className="action-steps-list">
+                {nextStepsActions.map((step, idx) => (
+                  <div key={idx} className="action-step-item">
+                    <div className="action-step-num">{step.step || idx + 1}</div>
+                    <div className="action-step-body">
+                      <div className="action-step-title">{step.title}</div>
+                      <div className="action-step-desc">{step.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Subtle Response Actions Bar */}
+        <div className="response-actions-bar">
+          <div className="actions-group-left">
+            <button
+              type="button"
+              className="action-pill-btn"
+              onClick={handleCopyText}
+              title="Copy response to clipboard"
+            >
+              {copied ? (
+                <>
+                  <Check size={14} color="var(--primary-brand)" />
+                  <span>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+
+            {onRegenerate && (
+              <button
+                type="button"
+                className="action-pill-btn"
+                onClick={onRegenerate}
+                title="Regenerate this response"
+              >
+                <RotateCcw size={14} />
+                <span>Retry</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="action-pill-btn"
+              onClick={handleShare}
+              title="Share response"
+            >
+              {shared ? (
+                <>
+                  <Check size={14} color="var(--primary-brand)" />
+                  <span>Shared</span>
+                </>
+              ) : (
+                <>
+                  <Share2 size={14} />
+                  <span>Share</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="actions-group-right">
+            <button
+              type="button"
+              className={`feedback-btn ${feedback === 'helpful' ? 'active-good' : ''}`}
+              onClick={() => handleFeedback('helpful')}
+              title="Helpful response"
+              aria-label="Thumbs up"
+            >
+              <ThumbsUp size={14} />
+            </button>
+            <button
+              type="button"
+              className={`feedback-btn ${feedback === 'unhelpful' ? 'active-bad' : ''}`}
+              onClick={() => handleFeedback('unhelpful')}
+              title="Needs improvement"
+              aria-label="Thumbs down"
+            >
+              <ThumbsDown size={14} />
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="claude-answer-container" id="legal-answer-card">

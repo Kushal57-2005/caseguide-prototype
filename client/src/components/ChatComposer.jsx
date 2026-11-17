@@ -153,8 +153,7 @@ export default function ChatComposer({
 
       {/* Subtle Disclaimer */}
       <div className="composer-disclaimer">
-        CaseGuide provides legal information and research. Please verify citations with official sources on India Code.
-      </div>
+CaseGuide provides AI-powered legal information and research. Our current knowledge base focuses exclusively on the Motor Vehicles Act, 1988, and related traffic and transport regulations. Support for additional areas of Indian law may be introduced in the future.      </div>
     </div>
   );
 }

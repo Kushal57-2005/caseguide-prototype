@@ -60,6 +60,24 @@ describe('AI Service Client (aiService)', () => {
       expect(result.citations).toHaveLength(1);
     });
 
+    it('should correctly normalize a FallbackResponse from FastAPI', () => {
+      const fallbackPayload = {
+        status: 'fallback',
+        response: "I couldn't find enough relevant information to answer your question accurately.\n\nCaseGuide currently specializes in Indian Motor Vehicle Law, including traffic violations, fines, driving licences, vehicle registration, permits, road accidents, insurance-related motor vehicle provisions, and road safety regulations.\n\nPlease rephrase your question with more details about your Motor Vehicle Law issue so I can help you find relevant legal information.",
+        sources: []
+      };
+
+      const result = validateStructuredRAGResponse(fallbackPayload, 'Can I get a refund for my laptop?');
+      expect(result).toBeDefined();
+      expect(result.metadata.status).toBe('FALLBACK');
+      expect(result.metadata.is_fallback).toBe(true);
+      expect(result.answer.summary).toContain("CaseGuide currently specializes in Indian Motor Vehicle Law");
+      expect(result.query.original_query).toBe('Can I get a refund for my laptop?');
+      expect(result.problem_summary.category).toBe('Motor Vehicle Law');
+      expect(result.next_steps.actions.length).toBeGreaterThan(0);
+      expect(Array.isArray(result.warnings)).toBe(true);
+    });
+
     it('should throw an AIServiceError if missing required sections', () => {
       expect(() => validateStructuredRAGResponse(null)).toThrow(AIServiceError);
       expect(() => validateStructuredRAGResponse({})).toThrow(AIServiceError);

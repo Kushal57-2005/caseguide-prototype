@@ -135,6 +135,7 @@ export default function ChatView({
                     <LegalAnswerCard
                       answer={msg.structuredResponse || msg.answer}
                       onRegenerate={idx === messages.length - 1 ? onRetry : null}
+                      onSelectPrompt={onSendMessage}
                     />
                   </div>
                 );

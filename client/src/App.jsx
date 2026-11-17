@@ -28,7 +28,7 @@ function MainApp() {
   const hasInitializedRef = useRef(false);
 
   // Legal research configuration
-  const [researchDomain, setResearchDomain] = useState('All Domains');
+  const [researchDomain, setResearchDomain] = useState('Motor Vehicle Law');
   const [researchMode, setResearchMode] = useState('Detailed Research');
 
   // Fetch all user chats on login

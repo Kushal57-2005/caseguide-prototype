@@ -18,8 +18,7 @@ export default function ChatComposer({
   setInputText,
   onSubmit,
   loading = false,
-  researchDomain = "All Domains",
-  setResearchDomain,
+  researchDomain = "Motor Vehicle Law",
   researchMode = "Detailed Research",
   setResearchMode,
 }) {
@@ -43,15 +42,6 @@ export default function ChatComposer({
     }
   };
 
-  const domains = [
-    "All Domains",
-    "Motor Vehicle Law",
-    "Constitutional Law",
-    "Criminal Law",
-    "Consumer Protection",
-    "Family Law",
-  ];
-
   const charsLeft = 1000 - inputText.length;
   const isOverLimit = charsLeft < 0;
 
@@ -63,12 +53,12 @@ export default function ChatComposer({
           ref={textareaRef}
           className="composer-textarea"
           rows={1}
-          placeholder="Ask anything about Indian law..."
+          placeholder="Ask anything about Motor Vehicle Law..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={loading}
-          aria-label="Ask anything about Indian law"
+          aria-label="Ask anything about Motor Vehicle Law"
         />
 
         {/* Action Toolbar */}
@@ -84,19 +74,18 @@ export default function ChatComposer({
               <Paperclip size={16} />
             </button>
 
-            {/* Legal Domain Selector Pill */}
-            <div className="domain-select-pill">
+            {/* Legal Domain Selector Pill (Locked to Motor Vehicle Law) */}
+            <div
+              className="domain-select-pill disabled"
+              title="CaseGuide specializes exclusively in Indian Motor Vehicle Law"
+            >
               <select
                 value={researchDomain}
-                onChange={(e) => setResearchDomain(e.target.value)}
+                disabled
                 className="domain-select-native"
-                aria-label="Select Legal Domain"
+                aria-label={`Legal Domain: ${researchDomain} (Specialized)`}
               >
-                {domains.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
+                <option value={researchDomain}>{researchDomain}</option>
               </select>
               <span className="domain-select-label">{researchDomain}</span>
               <ChevronDown size={13} className="domain-chevron" />

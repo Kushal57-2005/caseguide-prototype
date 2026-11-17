@@ -23,8 +23,7 @@ import {
 export default function SettingsModal({
   isOpen,
   onClose,
-  researchDomain = 'All Domains',
-  onDomainChange = () => {},
+  researchDomain = 'Motor Vehicle Law',
   researchMode = 'Detailed Research',
   onModeChange = () => {}
 }) {
@@ -37,15 +36,6 @@ export default function SettingsModal({
     { id: 'light', label: 'Light', icon: Sun },
     { id: 'dark', label: 'Dark', icon: Moon },
     { id: 'system', label: 'System', icon: Laptop }
-  ];
-
-  const domains = [
-    'All Domains',
-    'Motor Vehicle Law',
-    'Constitutional Law',
-    'Criminal Law',
-    'Consumer Protection',
-    'Family Law'
   ];
 
   return (
@@ -99,18 +89,22 @@ export default function SettingsModal({
             </p>
 
             <div className="settings-field-group">
-              <label className="settings-field-label">Default Domain</label>
+              <div className="settings-label-row">
+                <label className="settings-field-label">Default Domain</label>
+                <span className="settings-badge-specialized">Specialized</span>
+              </div>
               <select
                 className="settings-select"
                 value={researchDomain}
-                onChange={(e) => onDomainChange(e.target.value)}
+                disabled
+                title="CaseGuide specializes exclusively in Indian Motor Vehicle Law"
+                aria-label={`Default Domain: ${researchDomain} (Specialized)`}
               >
-                {domains.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
+                <option value={researchDomain}>{researchDomain}</option>
               </select>
+              <span className="settings-field-hint">
+                CaseGuide currently specializes in Indian Motor Vehicle Law. Additional legal domains will be available in upcoming releases.
+              </span>
             </div>
 
             <div className="settings-field-group" style={{ marginTop: '12px' }}>

@@ -1055,6 +1055,20 @@ button:disabled {
   overflow: hidden;
 }
 
+.domain-select-pill.disabled {
+  cursor: not-allowed;
+  opacity: 0.88;
+}
+
+.domain-select-pill.disabled .domain-select-native {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.domain-select-pill.disabled .domain-chevron {
+  opacity: 0.45;
+}
+
 .domain-select-native {
   position: absolute;
   top: 0;
@@ -1814,6 +1828,28 @@ button:disabled {
   gap: 6px;
 }
 
+.settings-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.settings-badge-specialized {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background-color: rgba(23, 76, 75, 0.12);
+  color: var(--primary-brand);
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .settings-badge-specialized {
+  background-color: rgba(121, 169, 161, 0.16);
+  color: var(--primary-brand);
+}
+
 .settings-field-label {
   font-size: 0.775rem;
   font-weight: 500;
@@ -1835,6 +1871,21 @@ button:disabled {
 
 .settings-select:focus {
   border-color: var(--primary-brand);
+}
+
+.settings-select:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.settings-field-hint {
+  display: block;
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
 .segmented-control {

@@ -31,7 +31,7 @@ export default function ChatView({
   onRetry,
   onToggleSidebar,
   onRenameChat = () => {},
-  researchDomain = 'All Domains',
+  researchDomain = 'Motor Vehicle Law',
   setResearchDomain = () => {},
   researchMode = 'Detailed Research',
   setResearchMode = () => {}

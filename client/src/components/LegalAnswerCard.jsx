@@ -29,34 +29,12 @@ import {
   FileText,
   Calendar,
   Share2,
-  Info,
-  Compass,
-  ArrowRight
+  Info
 } from 'lucide-react';
-
-const FALLBACK_MOTOR_VEHICLE_PROMPTS = [
-  {
-    title: 'Traffic Challan Penalties',
-    query: 'What are the statutory fines for driving without a helmet, dangerous driving, and jumping red lights under Section 194 of the Motor Vehicles Act?'
-  },
-  {
-    title: 'Disputing an e-Challan',
-    query: 'What is the procedure to dispute or challenge a wrong traffic e-challan before a Virtual Court or Traffic Police?'
-  },
-  {
-    title: 'Accident Claim (MACT)',
-    query: 'What is the procedure and limitation period to claim compensation for road accident injuries under Section 166 before the Motor Accidents Claims Tribunal (MACT)?'
-  },
-  {
-    title: 'Driving Licence Validity',
-    query: 'What is the grace period and renewal procedure for driving with an expired Driving Licence under the Motor Vehicles Act?'
-  }
-];
 
 export default function LegalAnswerCard({
   answer,
-  onRegenerate = null,
-  onSelectPrompt = null
+  onRegenerate = null
 }) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
@@ -223,59 +201,12 @@ export default function LegalAnswerCard({
       answer?.status === 'fallback'
     );
 
-  // Render Fallback Specialization Notice if low similarity or out-of-scope in FastAPI
+  // Render Fallback response directly in clean editorial prose
   if (isFallback) {
     return (
       <article className="claude-answer-container" id="legal-answer-card">
-        <div className="fallback-scope-card">
-          <div className="fallback-scope-header">
-            <Compass size={18} className="inline-icon" />
-            <span className="fallback-scope-badge">Scope & Specialization Notice</span>
-          </div>
-
-          <div className="editorial-summary-prose">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
-          </div>
-
-          {onSelectPrompt && (
-            <div className="fallback-suggestions-wrap">
-              <span className="fallback-suggestions-label">
-                Explore supported Motor Vehicle Law topics:
-              </span>
-              <div className="fallback-pills-grid">
-                {FALLBACK_MOTOR_VEHICLE_PROMPTS.map((p, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="fallback-prompt-pill"
-                    onClick={() => onSelectPrompt(p.query)}
-                  >
-                    <span>{p.title}</span>
-                    <ArrowRight size={13} className="pill-arrow" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {nextStepsActions.length > 0 && (
-            <div className="action-plan-section" style={{ marginTop: '4px' }}>
-              <h3 className="section-subheading">
-                <Clock size={15} className="inline-icon" /> What To Do Next
-              </h3>
-              <div className="action-steps-list">
-                {nextStepsActions.map((step, idx) => (
-                  <div key={idx} className="action-step-item">
-                    <div className="action-step-num">{step.step || idx + 1}</div>
-                    <div className="action-step-body">
-                      <div className="action-step-title">{step.title}</div>
-                      <div className="action-step-desc">{step.description}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="editorial-summary-prose">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
         </div>
 
         {/* Subtle Response Actions Bar */}

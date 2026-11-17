@@ -4,38 +4,38 @@
  * Legal Domain selector, Research Mode toggle, and subtle disclaimer.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from "react";
 import {
   ArrowUp,
   Paperclip,
   BookOpen,
   Sparkles,
-  ChevronDown
-} from 'lucide-react';
+  ChevronDown,
+} from "lucide-react";
 
 export default function ChatComposer({
   inputText,
   setInputText,
   onSubmit,
   loading = false,
-  researchDomain = 'All Domains',
+  researchDomain = "All Domains",
   setResearchDomain,
-  researchMode = 'Detailed Research',
-  setResearchMode
+  researchMode = "Detailed Research",
+  setResearchMode,
 }) {
   const textareaRef = useRef(null);
 
   // Auto-resize textarea up to 220px
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       const newHeight = Math.min(textareaRef.current.scrollHeight, 220);
       textareaRef.current.style.height = `${newHeight}px`;
     }
   }, [inputText]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (!loading && inputText.trim()) {
         onSubmit(e);
@@ -44,12 +44,12 @@ export default function ChatComposer({
   };
 
   const domains = [
-    'All Domains',
-    'Motor Vehicle Law',
-    'Constitutional Law',
-    'Criminal Law',
-    'Consumer Protection',
-    'Family Law'
+    "All Domains",
+    "Motor Vehicle Law",
+    "Constitutional Law",
+    "Criminal Law",
+    "Consumer Protection",
+    "Family Law",
   ];
 
   const charsLeft = 1000 - inputText.length;
@@ -105,15 +105,17 @@ export default function ChatComposer({
             {/* Research Mode Toggle Pill */}
             <button
               type="button"
-              className={`mode-toggle-pill ${researchMode === 'Detailed Research' ? 'active' : ''}`}
+              className={`mode-toggle-pill ${researchMode === "Detailed Research" ? "active" : ""}`}
               onClick={() =>
                 setResearchMode(
-                  researchMode === 'Detailed Research' ? 'Quick Answer' : 'Detailed Research'
+                  researchMode === "Detailed Research"
+                    ? "Quick Answer"
+                    : "Detailed Research",
                 )
               }
               title="Toggle Research Depth"
             >
-              {researchMode === 'Detailed Research' ? (
+              {researchMode === "Detailed Research" ? (
                 <>
                   <BookOpen size={13} />
                   <span>Detailed Research</span>
@@ -129,7 +131,9 @@ export default function ChatComposer({
 
           <div className="composer-tools-right">
             {inputText.length > 700 && (
-              <span className={`composer-char-count ${isOverLimit ? 'overlimit' : ''}`}>
+              <span
+                className={`composer-char-count ${isOverLimit ? "overlimit" : ""}`}
+              >
                 {charsLeft}
               </span>
             )}
@@ -153,7 +157,11 @@ export default function ChatComposer({
 
       {/* Subtle Disclaimer */}
       <div className="composer-disclaimer">
-CaseGuide provides AI-powered legal information and research. Our current knowledge base focuses exclusively on the Motor Vehicles Act, 1988, and related traffic and transport regulations. Support for additional areas of Indian law may be introduced in the future.      </div>
+        CaseGuide provides AI-powered legal information and research. Our
+        current knowledge base focuses exclusively on the Motor Vehicles Act and
+        related traffic and transport regulations. Support for additional areas
+        of Indian law may be introduced in the future.{" "}
+      </div>
     </div>
   );
 }

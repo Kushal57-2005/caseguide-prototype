@@ -74,7 +74,7 @@ describe('AI Service Client (aiService)', () => {
       expect(result.answer.summary).toContain("CaseGuide currently specializes in Indian Motor Vehicle Law");
       expect(result.query.original_query).toBe('Can I get a refund for my laptop?');
       expect(result.problem_summary.category).toBe('Motor Vehicle Law');
-      expect(result.next_steps.actions.length).toBeGreaterThan(0);
+      expect(Array.isArray(result.next_steps.actions)).toBe(true);
       expect(Array.isArray(result.warnings)).toBe(true);
     });
 

@@ -82,28 +82,10 @@ export function validateStructuredRAGResponse(data, originalQuestion = '') {
         chunks: []
       },
       next_steps: {
-        actions: [
-          {
-            step: 1,
-            title: 'Provide Specific Details',
-            description: 'Include specific details such as vehicle type, traffic challan section, accident circumstances, or RTO jurisdiction.'
-          },
-          {
-            step: 2,
-            title: 'Explore Supported Topics',
-            description: 'Ask about traffic fines, driving licence rules, vehicle registration, accident compensation (MACT), or vehicle insurance claims.'
-          }
-        ]
+        actions: []
       },
-      warnings: [
-        {
-          type: 'SCOPE_NOTICE',
-          message: 'CaseGuide AI currently specializes in Indian Motor Vehicle Law (Motor Vehicles Act, 1988, Central Motor Vehicles Rules, and related road safety & accident compensation provisions).'
-        }
-      ],
-      limitations: [
-        'Detailed statutory citations require questions relating to Indian Motor Vehicle Law.'
-      ],
+      warnings: [],
+      limitations: [],
       metadata: {
         status: 'FALLBACK',
         is_fallback: true,

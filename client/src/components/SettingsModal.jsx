@@ -184,7 +184,7 @@ export default function SettingsModal({
           <div className="settings-footer-note">
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <ShieldCheck size={14} color="var(--primary-brand)" />
-              <span>CaseGuide — Indian Legal Research Assistant</span>
+              <span>CaseGuide — Indian Motor Vehicle Law Guide</span>
             </div>
             <span>v2.0 • Independent AI Microservice</span>
           </div>

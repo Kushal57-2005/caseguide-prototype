@@ -1,48 +1,48 @@
 /**
  * @file WelcomeScreen.jsx
  * @description Claude-inspired minimalist welcome screen for CaseGuide with refined serif typography,
- * spacious whitespace, and clean suggested legal research prompt cards.
+ * spacious whitespace, and practical sample queries on Indian Motor Vehicle Law.
  */
 
-import React from 'react';
-import logoImg from '../assets/logo.jpg';
+import React from "react";
+import logoImg from "../assets/logo.jpg";
 import {
-  BookOpen,
+  FileText,
   Scale,
   Shield,
-  FileSearch,
-  ArrowUpRight
-} from 'lucide-react';
+  BookOpen,
+  ArrowUpRight,
+} from "lucide-react";
 
 const SUGGESTED_PROMPTS = [
   {
-    id: 'laws',
-    title: 'Understand Indian Laws',
-    desc: 'Explain a legal provision in simple language.',
-    icon: BookOpen,
-    query: 'Explain the mandatory safety obligations and recall procedures for vehicle manufacturers under the Motor Vehicles Act.'
+    id: "penalties",
+    title: "Driving Without Licence or Insurance",
+    desc: "What is the penalty for driving without a valid driving licence or insurance under the Motor Vehicles Act?",
+    icon: FileText,
+    query: "What is the penalty for driving without a valid driving licence or insurance under the Motor Vehicles Act?",
   },
   {
-    id: 'judgments',
-    title: 'Explore Court Judgments',
-    desc: 'Find and understand relevant Indian court judgments.',
+    id: "challan",
+    title: "Disputing a Traffic e-Challan",
+    desc: "How can I dispute or challenge an incorrect traffic e-challan in court?",
     icon: Scale,
-    query: 'What legal precedents govern liability and compensation for consumer product defects and fraudulent transactions in India?'
+    query: "How can I dispute or challenge an incorrect traffic e-challan in court?",
   },
   {
-    id: 'rights',
-    title: 'Constitutional Rights',
-    desc: 'Explore fundamental rights under the Indian Constitution.',
+    id: "accident",
+    title: "Road Accident Compensation (MACT)",
+    desc: "What is the procedure and timeline for claiming compensation in a road accident before the MACT?",
     icon: Shield,
-    query: 'What remedies exist under Article 226 and 32 when an administrative authority violates principles of natural justice?'
+    query: "What is the procedure and timeline for claiming compensation in a road accident before the MACT?",
   },
   {
-    id: 'research',
-    title: 'Legal Research',
-    desc: 'Research a legal question with supporting sources.',
-    icon: FileSearch,
-    query: 'What is the statutory limitation period and procedure to file a grievance before the District Consumer Commission?'
-  }
+    id: "licence",
+    title: "Expired Driving Licence Renewal",
+    desc: "What are the rules and grace period for renewing an expired driving licence under the MV Act?",
+    icon: BookOpen,
+    query: "What are the rules and grace period for renewing an expired driving licence under the MV Act?",
+  },
 ];
 
 export default function WelcomeScreen({ onSelectPrompt }) {
@@ -51,15 +51,19 @@ export default function WelcomeScreen({ onSelectPrompt }) {
       {/* Editorial Header */}
       <div className="welcome-header">
         <div className="welcome-logo-badge">
-          <img src={logoImg} alt="CaseGuide Emblem" className="welcome-logo-img" />
+          <img
+            src={logoImg}
+            alt="CaseGuide Emblem"
+            className="welcome-logo-img"
+          />
         </div>
-        <h1 className="welcome-title font-serif">Your Legal Research Assistant</h1>
+        <h1 className="welcome-title font-serif">How can CaseGuide help you today?</h1>
         <p className="welcome-subtitle">
-          Understand Indian law, explore judgments, and discover legal insights with AI-powered research.
+          Ask questions about Indian Motor Vehicle Law, traffic penalties, accident claims, and driving rules.
         </p>
       </div>
 
-      {/* 4 Suggested Prompt Cards */}
+      {/* 4 Sample Query Cards */}
       <div className="welcome-suggestions-grid">
         {SUGGESTED_PROMPTS.map((item) => {
           const Icon = item.icon;

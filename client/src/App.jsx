@@ -5,7 +5,7 @@
  * sidebar interactions, and settings modal.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import AuthModal from './components/AuthModal.jsx';

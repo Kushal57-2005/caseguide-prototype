@@ -192,6 +192,7 @@ button:disabled {
   align-items: center;
   gap: 10px;
   user-select: none;
+  cursor: pointer;
 }
 
 .brand-logo {
@@ -235,11 +236,21 @@ button:disabled {
   justify-content: center;
   color: var(--text-secondary);
   transition: all 0.15s ease;
+  cursor: pointer;
 }
 
 .btn-icon:hover {
   background-color: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.header-new-chat-btn {
+  color: var(--text-primary);
+}
+
+.header-new-chat-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--primary-brand);
 }
 
 .btn-icon.subtle {
@@ -274,6 +285,8 @@ button:disabled {
   gap: 8px;
   box-shadow: var(--shadow-sm);
   transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
 }
 
 .btn-new-chat:hover {

@@ -17,7 +17,8 @@ import {
   Menu,
   RotateCcw,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  SquarePen
 } from 'lucide-react';
 
 const PROGRESS_STAGES = [
@@ -35,6 +36,7 @@ export default function ChatView({
   error = null,
   onRetry,
   onToggleSidebar,
+  onNewChat = () => {},
   researchDomain = 'All Domains',
   setResearchDomain = () => {},
   researchMode = 'Detailed Research',
@@ -91,6 +93,18 @@ export default function ChatView({
         </div>
 
         <div className="header-right">
+          {onNewChat && (
+            <button
+              type="button"
+              className="btn-icon header-new-chat-btn"
+              onClick={onNewChat}
+              title="Start a new legal research session"
+              aria-label="New chat"
+            >
+              <SquarePen size={17} />
+            </button>
+          )}
+
           <div className="model-pill" title="CaseGuide Legal Assistant">
             <Sparkles size={12} className="model-pill-icon" />
             <span>CaseGuide Assistant</span>

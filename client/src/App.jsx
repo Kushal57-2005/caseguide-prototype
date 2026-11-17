@@ -25,6 +25,7 @@ function MainApp() {
   const [lastQuestion, setLastQuestion] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   // Legal research configuration
   const [researchDomain, setResearchDomain] = useState('All Domains');
@@ -38,19 +39,23 @@ function MainApp() {
         setChats(res.chats);
         if (selectId) {
           setCurrentChatId(selectId);
-        } else if (res.chats.length > 0 && !currentChatId) {
-          setCurrentChatId(res.chats[0]._id);
+        } else if (!hasInitializedRef.current) {
+          hasInitializedRef.current = true;
+          if (res.chats.length > 0) {
+            setCurrentChatId(res.chats[0]._id);
+          }
         }
       }
     } catch (err) {
       console.error('Error fetching chats:', err);
     }
-  }, [currentChatId]);
+  }, []);
 
   useEffect(() => {
     if (user) {
       loadChats();
     } else {
+      hasInitializedRef.current = false;
       setChats([]);
       setCurrentChatId(null);
       setMessages([]);
@@ -82,12 +87,12 @@ function MainApp() {
   }, [currentChatId]);
 
   // Start a fresh consultation session
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
     setCurrentChatId(null);
     setMessages([]);
     setError(null);
     setSidebarOpen(false);
-  };
+  }, []);
 
   // Rename a chat
   const handleRenameChat = async (chatId, newTitle) => {
@@ -231,6 +236,7 @@ function MainApp() {
 
       {/* Main Conversation Area */}
       <ChatView
+        key={currentChatId || 'new-chat'}
         chat={activeChat}
         messages={messages}
         onSendMessage={handleSendMessage}
@@ -238,6 +244,7 @@ function MainApp() {
         error={error}
         onRetry={handleRetry}
         onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+        onNewChat={handleNewChat}
         researchDomain={researchDomain}
         setResearchDomain={setResearchDomain}
         researchMode={researchMode}

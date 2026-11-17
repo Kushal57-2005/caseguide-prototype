@@ -592,10 +592,84 @@ button:disabled {
   display: none;
 }
 
-.chat-header-title .title-text {
+.chat-header-title-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.header-title-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-header-title-wrap .title-text {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.btn-header-edit-title {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-header-edit-title:hover {
+  opacity: 1;
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.header-rename-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-rename-input {
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--primary-brand);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  min-width: 180px;
+  max-width: 360px;
+}
+
+.btn-header-rename-save,
+.btn-header-rename-cancel {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-header-rename-save:hover {
+  background-color: var(--bg-success-soft);
+  color: var(--text-success);
+}
+
+.btn-header-rename-cancel:hover {
+  background-color: var(--bg-danger-soft);
+  color: var(--text-danger);
 }
 
 .header-right {

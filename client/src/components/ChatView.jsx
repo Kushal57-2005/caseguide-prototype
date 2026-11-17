@@ -16,9 +16,10 @@ import ChatComposer from './ChatComposer.jsx';
 import {
   Menu,
   RotateCcw,
-  Sparkles,
   AlertCircle,
-  SquarePen
+  Edit2,
+  Check,
+  X
 } from 'lucide-react';
 
 const PROGRESS_STAGES = [
@@ -36,7 +37,7 @@ export default function ChatView({
   error = null,
   onRetry,
   onToggleSidebar,
-  onNewChat = () => {},
+  onRenameChat = () => {},
   researchDomain = 'All Domains',
   setResearchDomain = () => {},
   researchMode = 'Detailed Research',
@@ -44,7 +45,15 @@ export default function ChatView({
 }) {
   const [inputText, setInputText] = useState('');
   const [stageIndex, setStageIndex] = useState(0);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [headerTitle, setHeaderTitle] = useState(chat?.title || '');
   const messagesEndRef = useRef(null);
+
+  // Sync header title when chat prop updates
+  useEffect(() => {
+    setHeaderTitle(chat?.title || '');
+    setIsEditingTitle(false);
+  }, [chat?.title]);
 
   // Auto-scroll on new messages or loading change
   useEffect(() => {
@@ -73,6 +82,23 @@ export default function ChatView({
     onSendMessage(promptText);
   };
 
+  const handleSaveHeaderTitle = async () => {
+    if (chat?._id && headerTitle.trim() && headerTitle.trim() !== chat.title) {
+      await onRenameChat(chat._id, headerTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleHeaderKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveHeaderTitle();
+    } else if (e.key === 'Escape') {
+      setHeaderTitle(chat?.title || '');
+      setIsEditingTitle(false);
+    }
+  };
+
   return (
     <main className="main-content">
       {/* Top Header */}
@@ -87,27 +113,60 @@ export default function ChatView({
           >
             <Menu size={18} />
           </button>
-          <div className="chat-header-title">
-            <span className="title-text">{chat?.title || 'New Legal Research'}</span>
-          </div>
-        </div>
 
-        <div className="header-right">
-          {onNewChat && (
-            <button
-              type="button"
-              className="btn-icon header-new-chat-btn"
-              onClick={onNewChat}
-              title="Start a new legal research session"
-              aria-label="New chat"
-            >
-              <SquarePen size={17} />
-            </button>
-          )}
-
-          <div className="model-pill" title="CaseGuide Legal Assistant">
-            <Sparkles size={12} className="model-pill-icon" />
-            <span>CaseGuide Assistant</span>
+          <div className="chat-header-title-wrap">
+            {isEditingTitle && chat ? (
+              <div className="header-rename-form">
+                <input
+                  type="text"
+                  className="header-rename-input"
+                  value={headerTitle}
+                  onChange={(e) => setHeaderTitle(e.target.value)}
+                  onKeyDown={handleHeaderKeyDown}
+                  onBlur={handleSaveHeaderTitle}
+                  autoFocus
+                  maxLength={150}
+                  aria-label="Rename conversation"
+                />
+                <button
+                  type="button"
+                  className="btn-header-rename-save"
+                  onClick={handleSaveHeaderTitle}
+                  title="Save title"
+                >
+                  <Check size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="btn-header-rename-cancel"
+                  onClick={() => {
+                    setHeaderTitle(chat?.title || '');
+                    setIsEditingTitle(false);
+                  }}
+                  title="Cancel"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="header-title-display">
+                <span className="title-text">{chat?.title || 'New Legal Research'}</span>
+                {chat && onRenameChat && (
+                  <button
+                    type="button"
+                    className="btn-header-edit-title"
+                    onClick={() => {
+                      setHeaderTitle(chat.title || '');
+                      setIsEditingTitle(true);
+                    }}
+                    title="Rename conversation"
+                    aria-label="Rename conversation"
+                  >
+                    <Edit2 size={13} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>

@@ -69,7 +69,7 @@ export async function renameChat(req, res, next) {
 
     const chat = await Chat.findOneAndUpdate(
       { _id: id, userId: req.user._id },
-      { title: title.trim().slice(0, 150) },
+      { title: title.trim().slice(0, 150), updatedAt: new Date() },
       { new: true }
     );
 

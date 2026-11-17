@@ -98,8 +98,8 @@ function MainApp() {
   const handleRenameChat = async (chatId, newTitle) => {
     try {
       const res = await api.chats.rename(chatId, newTitle);
-      if (res.success) {
-        setChats(prev => prev.map(c => c._id === chatId ? { ...c, title: newTitle } : c));
+      if (res.success && res.chat) {
+        setChats(prev => prev.map(c => c._id === chatId ? { ...c, title: res.chat.title || newTitle } : c));
       }
     } catch (err) {
       alert(`Could not rename conversation: ${err.message}`);
@@ -244,7 +244,7 @@ function MainApp() {
         error={error}
         onRetry={handleRetry}
         onToggleSidebar={() => setSidebarOpen(prev => !prev)}
-        onNewChat={handleNewChat}
+        onRenameChat={handleRenameChat}
         researchDomain={researchDomain}
         setResearchDomain={setResearchDomain}
         researchMode={researchMode}

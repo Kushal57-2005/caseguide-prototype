@@ -25,6 +25,10 @@ router.use(requireAuth);
 router.get('/', getChats);
 router.post('/', createChat);
 router.patch('/:id', renameChat);
+router.patch('/:id/rename', renameChat);
+router.put('/:id', renameChat);
+router.put('/:id/rename', renameChat);
+router.post('/:id/rename', renameChat);
 router.delete('/:id', deleteChat);
 router.get('/:id/messages', getMessages);
 

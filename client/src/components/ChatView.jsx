@@ -82,6 +82,15 @@ export default function ChatView({
     }
   };
 
+  // Deduplicate any accidental consecutive duplicate user messages or identical IDs
+  const displayMessages = messages.filter((msg, idx, arr) => {
+    if (idx === 0) return true;
+    const prev = arr[idx - 1];
+    if (msg._id && prev._id && msg._id === prev._id) return false;
+    if (msg.role === 'user' && prev.role === 'user' && msg.content === prev.content) return false;
+    return true;
+  });
+
   return (
     <main className="main-content">
       {/* Top Header */}
@@ -157,11 +166,11 @@ export default function ChatView({
       {/* Messages Stream / Welcome Screen */}
       <div className="messages-scroll-area">
         <div className="messages-inner-container">
-          {messages.length === 0 && !loading ? (
+          {displayMessages.length === 0 && !loading ? (
             <WelcomeScreen onSelectPrompt={handleSelectPrompt} />
           ) : (
             <div className="messages-thread">
-              {messages.map((msg, idx) => {
+              {displayMessages.map((msg, idx) => {
                 if (msg.role === 'user') {
                   return (
                     <div key={msg._id || idx} className="user-message-row">
@@ -176,7 +185,7 @@ export default function ChatView({
                   <div key={msg._id || idx} className="assistant-message-row">
                     <LegalAnswerCard
                       answer={msg.structuredResponse || msg.answer}
-                      onRegenerate={idx === messages.length - 1 ? onRetry : null}
+                      onRegenerate={idx === displayMessages.length - 1 ? onRetry : null}
                       onSelectPrompt={onSendMessage}
                     />
                   </div>

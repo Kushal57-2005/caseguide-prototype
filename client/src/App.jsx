@@ -26,6 +26,7 @@ function MainApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const hasInitializedRef = useRef(false);
+  const isSubmittingChatIdRef = useRef(null);
 
   // Legal research configuration
   const [researchDomain, setResearchDomain] = useState(() => {
@@ -89,6 +90,12 @@ function MainApp() {
         setMessages([]);
         return;
       }
+
+      // Skip background fetch if we are currently submitting the first query for this newly created chat
+      if (isSubmittingChatIdRef.current === currentChatId) {
+        return;
+      }
+
       try {
         const res = await api.chats.getMessages(currentChatId);
         if (res.success && res.messages) {
@@ -162,11 +169,16 @@ function MainApp() {
         const createRes = await api.chats.create('New Legal Query');
         if (createRes.success && createRes.chat) {
           chatId = createRes.chat._id;
+          // Mark this chatId as actively submitting BEFORE calling setCurrentChatId
+          // so the loadChatMessages effect skips fetching during the in-flight ask
+          isSubmittingChatIdRef.current = chatId;
           setCurrentChatId(chatId);
           setChats(prev => [createRes.chat, ...prev]);
         } else {
           throw new Error('Failed to initiate legal consultation session.');
         }
+      } else {
+        isSubmittingChatIdRef.current = chatId;
       }
 
       // Optimistically append user message to UI
@@ -185,7 +197,16 @@ function MainApp() {
 
       if (askRes.success && askRes.assistantMessage) {
         setMessages(prev => {
-          const filtered = prev.filter(m => m._id !== optimisticId);
+          const incomingIds = new Set(
+            [optimisticId, askRes.userMessage?._id, askRes.assistantMessage?._id].filter(Boolean)
+          );
+          const filtered = prev.filter(m => {
+            if (incomingIds.has(m._id)) return false;
+            if (askRes.userMessage && m.role === 'user' && m.content === askRes.userMessage.content) {
+              return false;
+            }
+            return true;
+          });
           return [
             ...filtered,
             askRes.userMessage || optimisticUserMsg,
@@ -206,6 +227,7 @@ function MainApp() {
       setMessages(prev => prev.filter(m => !String(m._id || '').startsWith('temp-')));
       setError(err.message || 'Unable to contact legal AI assistant. Please try again.');
     } finally {
+      isSubmittingChatIdRef.current = null;
       setLoadingAnswer(false);
     }
   };

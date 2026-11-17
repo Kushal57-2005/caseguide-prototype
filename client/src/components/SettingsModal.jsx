@@ -4,9 +4,9 @@
  * legal research default configurations, and user profile management.
  */
 
-import React from 'react';
-import { useTheme } from '../context/ThemeContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import React from "react";
+import { useTheme } from "../context/ThemeContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import {
   X,
   Sun,
@@ -17,25 +17,30 @@ import {
   Sparkles,
   LogOut,
   User,
-  ShieldCheck
-} from 'lucide-react';
+  ShieldCheck,
+} from "lucide-react";
 
 export default function SettingsModal({
   isOpen,
   onClose,
-  researchDomain = 'Motor Vehicle Law',
-  researchMode = 'Detailed Research',
-  onModeChange = () => {}
+  researchDomain = "Motor Vehicle Law",
+  researchMode = "Detailed Research",
+  onModeChange = () => {},
 }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { user, logout } = useAuth();
 
   if (!isOpen) return null;
 
+  const activeDomain =
+    !researchDomain || researchDomain === "All Domains"
+      ? "Motor Vehicle Law"
+      : researchDomain;
+
   const themes = [
-    { id: 'light', label: 'Light', icon: Sun },
-    { id: 'dark', label: 'Dark', icon: Moon },
-    { id: 'system', label: 'System', icon: Laptop }
+    { id: "light", label: "Light", icon: Sun },
+    { id: "dark", label: "Dark", icon: Moon },
+    { id: "system", label: "System", icon: Laptop },
   ];
 
   return (
@@ -47,7 +52,11 @@ export default function SettingsModal({
             <Scale size={20} className="brand-accent-icon" />
             <h3>Settings</h3>
           </div>
-          <button className="btn-icon" onClick={onClose} aria-label="Close settings">
+          <button
+            className="btn-icon"
+            onClick={onClose}
+            aria-label="Close settings"
+          >
             <X size={18} />
           </button>
         </div>
@@ -58,7 +67,7 @@ export default function SettingsModal({
           <div className="settings-section">
             <label className="settings-section-label">Appearance</label>
             <p className="settings-section-desc">
-              Choose your interface preference. Currently active:{' '}
+              Choose your interface preference. Currently active:{" "}
               <span className="capitalize-tag">{resolvedTheme} mode</span>
             </p>
 
@@ -70,7 +79,7 @@ export default function SettingsModal({
                   <button
                     key={t.id}
                     type="button"
-                    className={`theme-option-card ${isSelected ? 'active' : ''}`}
+                    className={`theme-option-card ${isSelected ? "active" : ""}`}
                     onClick={() => setTheme(t.id)}
                   >
                     <IconComponent size={18} />
@@ -83,7 +92,9 @@ export default function SettingsModal({
 
           {/* 2. Research Preferences */}
           <div className="settings-section">
-            <label className="settings-section-label">Research Preferences</label>
+            <label className="settings-section-label">
+              Research Preferences
+            </label>
             <p className="settings-section-desc">
               Configure default legal domains and depth for analysis.
             </p>
@@ -95,32 +106,33 @@ export default function SettingsModal({
               </div>
               <select
                 className="settings-select"
-                value={researchDomain}
+                value={activeDomain}
                 disabled
                 title="CaseGuide specializes exclusively in Indian Motor Vehicle Law"
-                aria-label={`Default Domain: ${researchDomain} (Specialized)`}
+                aria-label={`Default Domain: ${activeDomain} (Specialized)`}
               >
-                <option value={researchDomain}>{researchDomain}</option>
+                <option value={activeDomain}>{activeDomain}</option>
               </select>
               <span className="settings-field-hint">
-                CaseGuide currently specializes in Indian Motor Vehicle Law. Additional legal domains will be available in upcoming releases.
+                CaseGuide currently specializes in Indian Motor Vehicle Law.
+                Additional legal domains will be available in upcoming releases.
               </span>
             </div>
 
-            <div className="settings-field-group" style={{ marginTop: '12px' }}>
+            <div className="settings-field-group" style={{ marginTop: "12px" }}>
               <label className="settings-field-label">Research Depth</label>
               <div className="segmented-control">
                 <button
                   type="button"
-                  className={`segmented-btn ${researchMode === 'Quick Answer' ? 'active' : ''}`}
-                  onClick={() => onModeChange('Quick Answer')}
+                  className={`segmented-btn ${researchMode === "Quick Answer" ? "active" : ""}`}
+                  onClick={() => onModeChange("Quick Answer")}
                 >
                   <Sparkles size={14} /> Quick Answer
                 </button>
                 <button
                   type="button"
-                  className={`segmented-btn ${researchMode === 'Detailed Research' ? 'active' : ''}`}
-                  onClick={() => onModeChange('Detailed Research')}
+                  className={`segmented-btn ${researchMode === "Detailed Research" ? "active" : ""}`}
+                  onClick={() => onModeChange("Detailed Research")}
                 >
                   <BookOpen size={14} /> Detailed Research
                 </button>
@@ -137,7 +149,9 @@ export default function SettingsModal({
                   <User size={18} />
                 </div>
                 <div className="settings-user-info">
-                  <div className="settings-user-name">{user.name || 'Citizen User'}</div>
+                  <div className="settings-user-name">
+                    {user.name || "Citizen User"}
+                  </div>
                   <div className="settings-user-email">{user.email}</div>
                 </div>
                 <button
@@ -157,7 +171,7 @@ export default function SettingsModal({
 
           {/* 4. About Info */}
           <div className="settings-footer-note">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <ShieldCheck size={14} color="var(--primary-brand)" />
               <span>CaseGuide — Indian Legal Research Assistant</span>
             </div>

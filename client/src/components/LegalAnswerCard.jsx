@@ -9,9 +9,9 @@
  * - Subtle response actions (Copy, Regenerate, Thumbs Up/Down feedback, Share/Print)
  */
 
-import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   BookOpen,
   Scale,
@@ -29,13 +29,10 @@ import {
   FileText,
   Calendar,
   Share2,
-  Info
-} from 'lucide-react';
+  Info,
+} from "lucide-react";
 
-export default function LegalAnswerCard({
-  answer,
-  onRegenerate = null
-}) {
+export default function LegalAnswerCard({ answer, onRegenerate = null }) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'helpful' | 'unhelpful' | null
@@ -52,31 +49,34 @@ export default function LegalAnswerCard({
   const nextStepsActions = Array.isArray(rag.next_steps?.actions)
     ? rag.next_steps.actions
     : Array.isArray(rag.next_steps)
-    ? rag.next_steps
-    : [];
+      ? rag.next_steps
+      : [];
   const warningsList = Array.isArray(rag.warnings) ? rag.warnings : [];
   const limitationsList = Array.isArray(rag.limitations) ? rag.limitations : [];
 
   // Plain explanation / summary
   const summaryText =
-    (typeof answerDetails === 'object' ? answerDetails.summary : null) ||
+    (typeof answerDetails === "object" ? answerDetails.summary : null) ||
     answer?.plain_explanation ||
-    '';
+    "";
 
   const explanationPoints =
-    typeof answerDetails === 'object' && Array.isArray(answerDetails.explanation)
+    typeof answerDetails === "object" &&
+    Array.isArray(answerDetails.explanation)
       ? answerDetails.explanation
       : [];
 
   const problemTitle =
-    (typeof problemSummary === 'object' ? problemSummary.title : null) ||
-    (typeof answer?.problem_summary === 'string' ? answer.problem_summary : null) ||
-    '';
+    (typeof problemSummary === "object" ? problemSummary.title : null) ||
+    (typeof answer?.problem_summary === "string"
+      ? answer.problem_summary
+      : null) ||
+    "";
 
   const category =
-    (typeof problemSummary === 'object' ? problemSummary.category : null) ||
+    (typeof problemSummary === "object" ? problemSummary.category : null) ||
     answer?.category ||
-    'Indian Law';
+    "Indian Law";
 
   // Handle Out-Of-Scope Questions
   if (rag.in_scope === false || answer?.in_scope === false) {
@@ -89,7 +89,7 @@ export default function LegalAnswerCard({
           </div>
           <p className="notice-body">
             {summaryText ||
-              'This question does not appear to involve Indian legal rights or statutory procedures. CaseGuide specializes in Indian laws (BNS, BNSS, Consumer Protection, RTI, Motor Vehicles, Tenancy, and Civil/Criminal procedures).'}
+              "This question does not appear to involve Indian legal rights or statutory procedures. CaseGuide specializes in Indian laws (BNS, BNSS, Consumer Protection, RTI, Motor Vehicles, Tenancy, and Civil/Criminal procedures)."}
           </p>
         </div>
       </article>
@@ -101,32 +101,50 @@ export default function LegalAnswerCard({
     ? rag.judgments
     : citations.filter(
         (c) =>
-          c.act?.toLowerCase().includes('court') ||
-          c.title?.toLowerCase().includes(' v. ') ||
-          c.title?.toLowerCase().includes(' vs ') ||
-          c.section?.toLowerCase().includes('judgment') ||
-          c.court
+          c.act?.toLowerCase().includes("court") ||
+          c.title?.toLowerCase().includes(" v. ") ||
+          c.title?.toLowerCase().includes(" vs ") ||
+          c.section?.toLowerCase().includes("judgment") ||
+          c.court,
       );
 
   const judgments = rawJudgments.map((j) => {
     return {
-      title: j.title || j.case_title || j.act || 'Court Precedent',
-      court: j.court || j.court_name || (j.act?.includes('Court') ? j.act : 'Supreme Court of India'),
-      date: j.date || j.judgment_date || j.year || 'Reported Judgment',
-      caseNumber: j.case_number || j.case_no || (j.section?.includes('Writ') || j.section?.includes('Appeal') ? j.section : 'Writ Petition / Appeal'),
-      paragraphRef: j.paragraphs || j.paragraph_ref || (j.supporting_text ? `Key Excerpt: "${j.supporting_text}"` : null),
-      pdfUrl: j.url || j.pdf_url || `https://indiankanoon.org/search/?formInput=${encodeURIComponent(j.title || j.act || 'Supreme Court')}`
+      title: j.title || j.case_title || j.act || "Court Precedent",
+      court:
+        j.court ||
+        j.court_name ||
+        (j.act?.includes("Court") ? j.act : "Supreme Court of India"),
+      date: j.date || j.judgment_date || j.year || "Reported Judgment",
+      caseNumber:
+        j.case_number ||
+        j.case_no ||
+        (j.section?.includes("Writ") || j.section?.includes("Appeal")
+          ? j.section
+          : "Writ Petition / Appeal"),
+      paragraphRef:
+        j.paragraphs ||
+        j.paragraph_ref ||
+        (j.supporting_text ? `Key Excerpt: "${j.supporting_text}"` : null),
+      pdfUrl:
+        j.url ||
+        j.pdf_url ||
+        `https://indiankanoon.org/search/?formInput=${encodeURIComponent(j.title || j.act || "Supreme Court")}`,
     };
   });
 
   const statutoryCitations = citations.filter(
-    (c) => !rawJudgments.some((j) => j.citation_id === c.citation_id || j.title === c.title)
+    (c) =>
+      !rawJudgments.some(
+        (j) => j.citation_id === c.citation_id || j.title === c.title,
+      ),
   );
 
   // Plain text export for clipboard / share
   const getFormattedPlainText = () => {
     const lines = [];
-    if (problemTitle) lines.push(`CaseGuide Legal Research: ${problemTitle}`, ``);
+    if (problemTitle)
+      lines.push(`CaseGuide Legal Research: ${problemTitle}`, ``);
     if (category) lines.push(`Category: ${category}`, ``);
     if (summaryText) lines.push(`Summary:`, summaryText, ``);
     if (explanationPoints.length > 0) {
@@ -137,7 +155,7 @@ export default function LegalAnswerCard({
     if (statutoryCitations.length > 0) {
       lines.push(`Sources & Provisions:`);
       statutoryCitations.forEach((c) => {
-        lines.push(`- ${c.act} (${c.section || ''}): ${c.title || ''}`);
+        lines.push(`- ${c.act} (${c.section || ""}): ${c.title || ""}`);
         if (c.supporting_text) lines.push(`  "${c.supporting_text}"`);
       });
       lines.push(``);
@@ -152,12 +170,14 @@ export default function LegalAnswerCard({
     if (nextStepsActions.length > 0) {
       lines.push(`Next Steps:`);
       nextStepsActions.forEach((s, i) => {
-        lines.push(`${i + 1}. ${s.title || ''}: ${s.description || s.detail || ''}`);
+        lines.push(
+          `${i + 1}. ${s.title || ""}: ${s.description || s.detail || ""}`,
+        );
       });
       lines.push(``);
     }
     lines.push(`Generated by CaseGuide AI — Indian Legal Research Assistant.`);
-    return lines.join('\n');
+    return lines.join("\n");
   };
 
   const handleCopyText = () => {
@@ -171,8 +191,8 @@ export default function LegalAnswerCard({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `CaseGuide: ${problemTitle || 'Legal Research'}`,
-          text
+          title: `CaseGuide: ${problemTitle || "Legal Research"}`,
+          text,
         });
         setShared(true);
         setTimeout(() => setShared(false), 2000);
@@ -192,21 +212,22 @@ export default function LegalAnswerCard({
     setFeedback((prev) => (prev === val ? null : val));
   };
 
-  const isFallback =
-    Boolean(
-      rag.metadata?.is_fallback ||
-      rag.metadata?.status === 'FALLBACK' ||
-      rag.status === 'fallback' ||
-      answer?.is_fallback ||
-      answer?.status === 'fallback'
-    );
+  const isFallback = Boolean(
+    rag.metadata?.is_fallback ||
+    rag.metadata?.status === "FALLBACK" ||
+    rag.status === "fallback" ||
+    answer?.is_fallback ||
+    answer?.status === "fallback",
+  );
 
   // Render Fallback response directly in clean editorial prose
   if (isFallback) {
     return (
       <article className="claude-answer-container" id="legal-answer-card">
         <div className="editorial-summary-prose">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {summaryText}
+          </ReactMarkdown>
         </div>
 
         {/* Subtle Response Actions Bar */}
@@ -266,8 +287,8 @@ export default function LegalAnswerCard({
           <div className="actions-group-right">
             <button
               type="button"
-              className={`feedback-btn ${feedback === 'helpful' ? 'active-good' : ''}`}
-              onClick={() => handleFeedback('helpful')}
+              className={`feedback-btn ${feedback === "helpful" ? "active-good" : ""}`}
+              onClick={() => handleFeedback("helpful")}
               title="Helpful response"
               aria-label="Thumbs up"
             >
@@ -275,8 +296,8 @@ export default function LegalAnswerCard({
             </button>
             <button
               type="button"
-              className={`feedback-btn ${feedback === 'unhelpful' ? 'active-bad' : ''}`}
-              onClick={() => handleFeedback('unhelpful')}
+              className={`feedback-btn ${feedback === "unhelpful" ? "active-bad" : ""}`}
+              onClick={() => handleFeedback("unhelpful")}
               title="Needs improvement"
               aria-label="Thumbs down"
             >
@@ -301,7 +322,9 @@ export default function LegalAnswerCard({
       {/* 1. In Plain Words (Executive Editorial Summary) */}
       {summaryText && (
         <div className="editorial-summary-prose">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {summaryText}
+          </ReactMarkdown>
         </div>
       )}
 
@@ -312,7 +335,9 @@ export default function LegalAnswerCard({
           <ul className="explanation-bullet-list">
             {explanationPoints.map((point, idx) => (
               <li key={idx} className="explanation-bullet-item">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{point}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {point}
+                </ReactMarkdown>
               </li>
             ))}
           </ul>
@@ -334,14 +359,16 @@ export default function LegalAnswerCard({
                 Sources & Statutory Provisions ({statutoryCitations.length})
               </span>
             </div>
-            {sourcesExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {sourcesExpanded ? (
+              <ChevronUp size={16} />
+            ) : (
+              <ChevronDown size={16} />
+            )}
           </button>
 
           {sourcesExpanded && (
             <div className="sources-content-list">
               {statutoryCitations.map((item, idx) => {
-                const queryParam = encodeURIComponent(`${item.act || ''} ${item.section || ''}`);
-                const indiaCodeUrl = `https://www.indiacode.nic.in/handle/123456789/1362/simple-search?query=${queryParam}`;
                 const isQuoteOpen = expandedCitationIndex === idx;
 
                 return (
@@ -349,10 +376,16 @@ export default function LegalAnswerCard({
                     <div className="source-card-main">
                       <div className="source-title-row">
                         <span className="source-act-name">{item.act}</span>
-                        {item.section && <span className="source-section-pill">{item.section}</span>}
+                        {item.section && (
+                          <span className="source-section-pill">
+                            {item.section}
+                          </span>
+                        )}
                       </div>
 
-                      {item.title && <div className="source-section-title">{item.title}</div>}
+                      {item.title && (
+                        <div className="source-section-title">{item.title}</div>
+                      )}
 
                       {item.supporting_text && (
                         <div>
@@ -363,8 +396,16 @@ export default function LegalAnswerCard({
                               setExpandedCitationIndex(isQuoteOpen ? null : idx)
                             }
                           >
-                            <span>{isQuoteOpen ? 'Hide statutory excerpt' : 'View statutory excerpt'}</span>
-                            {isQuoteOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            <span>
+                              {isQuoteOpen
+                                ? "Hide statutory excerpt"
+                                : "View statutory excerpt"}
+                            </span>
+                            {isQuoteOpen ? (
+                              <ChevronUp size={12} />
+                            ) : (
+                              <ChevronDown size={12} />
+                            )}
                           </button>
 
                           {isQuoteOpen && (
@@ -375,17 +416,6 @@ export default function LegalAnswerCard({
                         </div>
                       )}
                     </div>
-
-                    <a
-                      href={indiaCodeUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="source-verify-link"
-                      title="Verify on official India Code repository"
-                    >
-                      <span>Verify on India Code</span>
-                      <ExternalLink size={12} />
-                    </a>
                   </div>
                 );
               })}
@@ -398,7 +428,8 @@ export default function LegalAnswerCard({
       {judgments.length > 0 && (
         <div className="judgment-section">
           <h3 className="section-subheading">
-            <Scale size={16} className="inline-icon" /> Relevant Court Precedents
+            <Scale size={16} className="inline-icon" /> Relevant Court
+            Precedents
           </h3>
           <div className="judgments-grid">
             {judgments.map((j, idx) => (
@@ -423,9 +454,7 @@ export default function LegalAnswerCard({
                 </div>
 
                 {j.paragraphRef && (
-                  <p className="judgment-excerpt">
-                    {j.paragraphRef}
-                  </p>
+                  <p className="judgment-excerpt">{j.paragraphRef}</p>
                 )}
 
                 <div className="judgment-card-footer">
@@ -459,7 +488,7 @@ export default function LegalAnswerCard({
             {nextStepsActions.map((step, idx) => {
               const stepNumber = step.step || idx + 1;
               const title = step.title || `Step ${stepNumber}`;
-              const description = step.description || step.detail || '';
+              const description = step.description || step.detail || "";
 
               return (
                 <div key={idx} className="action-step-item">
@@ -485,7 +514,8 @@ export default function LegalAnswerCard({
 
           <div className="callout-body">
             {warningsList.map((warning, idx) => {
-              const msg = typeof warning === 'string' ? warning : warning.message || '';
+              const msg =
+                typeof warning === "string" ? warning : warning.message || "";
               return (
                 <div key={`w-${idx}`} className="callout-item">
                   <span className="callout-bullet">•</span>
@@ -576,8 +606,8 @@ export default function LegalAnswerCard({
           {/* Helpful Feedback */}
           <button
             type="button"
-            className={`feedback-btn ${feedback === 'helpful' ? 'active-good' : ''}`}
-            onClick={() => handleFeedback('helpful')}
+            className={`feedback-btn ${feedback === "helpful" ? "active-good" : ""}`}
+            onClick={() => handleFeedback("helpful")}
             title="Helpful response"
             aria-label="Thumbs up"
           >
@@ -587,8 +617,8 @@ export default function LegalAnswerCard({
           {/* Not Helpful Feedback */}
           <button
             type="button"
-            className={`feedback-btn ${feedback === 'unhelpful' ? 'active-bad' : ''}`}
-            onClick={() => handleFeedback('unhelpful')}
+            className={`feedback-btn ${feedback === "unhelpful" ? "active-bad" : ""}`}
+            onClick={() => handleFeedback("unhelpful")}
             title="Needs improvement"
             aria-label="Thumbs down"
           >

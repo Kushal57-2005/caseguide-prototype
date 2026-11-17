@@ -229,7 +229,7 @@ export default function ChatView({
         setInputText={setInputText}
         onSubmit={handleSubmit}
         loading={loading}
-        researchDomain={researchDomain}
+        researchDomain={(!researchDomain || researchDomain === 'All Domains') ? 'Motor Vehicle Law' : researchDomain}
         setResearchDomain={setResearchDomain}
         researchMode={researchMode}
         setResearchMode={setResearchMode}

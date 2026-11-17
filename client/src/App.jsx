@@ -28,8 +28,28 @@ function MainApp() {
   const hasInitializedRef = useRef(false);
 
   // Legal research configuration
-  const [researchDomain, setResearchDomain] = useState('Motor Vehicle Law');
+  const [researchDomain, setResearchDomain] = useState(() => {
+    try {
+      const saved = localStorage.getItem('caseguide_domain');
+      return (saved && saved !== 'All Domains') ? saved : 'Motor Vehicle Law';
+    } catch {
+      return 'Motor Vehicle Law';
+    }
+  });
   const [researchMode, setResearchMode] = useState('Detailed Research');
+
+  useEffect(() => {
+    try {
+      if (!researchDomain || researchDomain === 'All Domains') {
+        setResearchDomain('Motor Vehicle Law');
+        localStorage.setItem('caseguide_domain', 'Motor Vehicle Law');
+      } else {
+        localStorage.setItem('caseguide_domain', researchDomain);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [researchDomain]);
 
   // Fetch all user chats on login
   const loadChats = useCallback(async (selectId = null) => {

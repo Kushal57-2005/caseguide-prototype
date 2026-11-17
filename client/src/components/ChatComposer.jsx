@@ -44,6 +44,10 @@ export default function ChatComposer({
 
   const charsLeft = 1000 - inputText.length;
   const isOverLimit = charsLeft < 0;
+  const activeDomain =
+    !researchDomain || researchDomain === "All Domains"
+      ? "Motor Vehicle Law"
+      : researchDomain;
 
   return (
     <div className="composer-wrapper">
@@ -80,20 +84,21 @@ export default function ChatComposer({
               title="CaseGuide specializes exclusively in Indian Motor Vehicle Law"
             >
               <select
-                value={researchDomain}
+                value={activeDomain}
                 disabled
                 className="domain-select-native"
-                aria-label={`Legal Domain: ${researchDomain} (Specialized)`}
+                aria-label={`Legal Domain: ${activeDomain} (Specialized)`}
               >
-                <option value={researchDomain}>{researchDomain}</option>
+                <option value={activeDomain}>{activeDomain}</option>
               </select>
-              <span className="domain-select-label">{researchDomain}</span>
+              <span className="domain-select-label">{activeDomain}</span>
               <ChevronDown size={13} className="domain-chevron" />
             </div>
 
             {/* Research Mode Toggle Pill */}
             <button
               type="button"
+              disabled
               className={`mode-toggle-pill ${researchMode === "Detailed Research" ? "active" : ""}`}
               onClick={() =>
                 setResearchMode(

@@ -9,7 +9,6 @@ import {
   ArrowUp,
   Paperclip,
   BookOpen,
-  Sparkles,
   ChevronDown,
 } from "lucide-react";
 
@@ -20,7 +19,7 @@ export default function ChatComposer({
   loading = false,
   researchDomain = "Motor Vehicle Law",
   researchMode = "Detailed Research",
-  setResearchMode,
+  setResearchMode: _setResearchMode = () => {},
 }) {
   const textareaRef = useRef(null);
 
@@ -95,31 +94,16 @@ export default function ChatComposer({
               <ChevronDown size={13} className="domain-chevron" />
             </div>
 
-            {/* Research Mode Toggle Pill */}
+            {/* Research Mode Pill (Locked to Detailed Research) */}
             <button
               type="button"
               disabled
-              className={`mode-toggle-pill ${researchMode === "Detailed Research" ? "active" : ""}`}
-              onClick={() =>
-                setResearchMode(
-                  researchMode === "Detailed Research"
-                    ? "Quick Answer"
-                    : "Detailed Research",
-                )
-              }
-              title="Toggle Research Depth"
+              className="mode-toggle-pill active disabled"
+              title="Research depth is locked to Detailed Research for comprehensive statutory citations and legal precedents"
+              aria-label={`Research Depth: ${researchMode || "Detailed Research"} (Locked)`}
             >
-              {researchMode === "Detailed Research" ? (
-                <>
-                  <BookOpen size={13} />
-                  <span>Detailed Research</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={13} />
-                  <span>Quick Answer</span>
-                </>
-              )}
+              <BookOpen size={13} />
+              <span>{researchMode || "Detailed Research"}</span>
             </button>
           </div>
 

@@ -24,8 +24,8 @@ export default function SettingsModal({
   isOpen,
   onClose,
   researchDomain = "Motor Vehicle Law",
-  researchMode = "Detailed Research",
-  onModeChange = () => {},
+  researchMode: _researchMode = "Detailed Research",
+  onModeChange: _onModeChange = () => {},
 }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { user, logout } = useAuth();
@@ -120,23 +120,34 @@ export default function SettingsModal({
             </div>
 
             <div className="settings-field-group" style={{ marginTop: "12px" }}>
-              <label className="settings-field-label">Research Depth</label>
-              <div className="segmented-control">
+              <div className="settings-label-row">
+                <label className="settings-field-label">Research Depth</label>
+                <span className="settings-badge-specialized">Specialized</span>
+              </div>
+              <div
+                className="segmented-control disabled"
+                title="CaseGuide is locked to Detailed Research for comprehensive statutory analysis"
+              >
                 <button
                   type="button"
-                  className={`segmented-btn ${researchMode === "Quick Answer" ? "active" : ""}`}
-                  onClick={() => onModeChange("Quick Answer")}
+                  disabled
+                  className="segmented-btn disabled"
+                  aria-label="Quick Answer (Disabled)"
                 >
                   <Sparkles size={14} /> Quick Answer
                 </button>
                 <button
                   type="button"
-                  className={`segmented-btn ${researchMode === "Detailed Research" ? "active" : ""}`}
-                  onClick={() => onModeChange("Detailed Research")}
+                  disabled
+                  className="segmented-btn active disabled"
+                  aria-label="Detailed Research (Locked & Active)"
                 >
                   <BookOpen size={14} /> Detailed Research
                 </button>
               </div>
+              <span className="settings-field-hint">
+                Research Depth is locked to Detailed Research for comprehensive statutory provisions and case law citations.
+              </span>
             </div>
           </div>
 

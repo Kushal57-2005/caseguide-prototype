@@ -1317,9 +1317,95 @@ button:disabled {
 .judgment-meta-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 0.75rem;
   color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.judgment-dot {
+  color: var(--border-strong);
+  font-size: 0.75rem;
+}
+
+.judgment-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-icon {
+  color: var(--accent);
+}
+
+.out-of-scope-notice {
+  padding: 18px 20px;
+  border-radius: 10px;
+  background-color: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notice-body {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Markdown prose enhancements: tables, blockquotes, code */
+.editorial-summary-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+
+.editorial-summary-prose th,
+.editorial-summary-prose td {
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.editorial-summary-prose th {
+  background-color: var(--bg-hover);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.editorial-summary-prose pre {
+  background-color: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.825rem;
+  margin: 10px 0;
+}
+
+.editorial-summary-prose code {
+  background-color: var(--bg-hover);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+.editorial-summary-prose blockquote {
+  border-left: 3px solid var(--primary-brand);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .judgment-excerpt {

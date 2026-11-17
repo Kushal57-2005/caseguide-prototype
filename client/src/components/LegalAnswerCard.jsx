@@ -1,16 +1,17 @@
 /**
  * @file LegalAnswerCard.jsx
  * @description Claude-inspired editorial legal response component:
- * - Editorial typography with Markdown rendering
- * - Expandable Legal Sources & Statutory Citations (Act, Section, verbatim quote, India Code link)
- * - Judgment Presentation Cards (Case title, Court, Case number, Paragraphs)
- * - What to Do Next (Action Steps)
- * - Warnings & Limitations callout
- * - Subtle response actions (Copy, Regenerate, Thumbs Up/Down feedback, Print)
+ * - Editorial typography with Markdown rendering (headings, paragraphs, lists, tables, code blocks)
+ * - Expandable Legal Sources & Statutory Citations (Act, Section, verbatim excerpt, official India Code link)
+ * - Judgment Presentation Cards (Case title, Court name, Judgment date, Case number, Paragraph references, View PDF/Record)
+ * - What to Do Next (Step-by-step action plan)
+ * - Important Warnings & Limitations callout
+ * - Subtle response actions (Copy, Regenerate, Thumbs Up/Down feedback, Share/Print)
  */
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   BookOpen,
   Scale,
@@ -25,7 +26,10 @@ import {
   ThumbsDown,
   ChevronDown,
   ChevronUp,
-  FileText
+  FileText,
+  Calendar,
+  Share2,
+  Info
 } from 'lucide-react';
 
 export default function LegalAnswerCard({
@@ -33,6 +37,7 @@ export default function LegalAnswerCard({
   onRegenerate = null
 }) {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'helpful' | 'unhelpful' | null
   const [sourcesExpanded, setSourcesExpanded] = useState(true);
   const [expandedCitationIndex, setExpandedCitationIndex] = useState(null);
@@ -73,36 +78,74 @@ export default function LegalAnswerCard({
     answer?.category ||
     'Indian Law';
 
+  // Handle Out-Of-Scope Questions
+  if (rag.in_scope === false || answer?.in_scope === false) {
+    return (
+      <article className="claude-answer-container">
+        <div className="out-of-scope-notice">
+          <div className="notice-header">
+            <Info size={16} className="inline-icon" />
+            <h3 className="section-subheading">Non-Legal Query</h3>
+          </div>
+          <p className="notice-body">
+            {summaryText ||
+              'This question does not appear to involve Indian legal rights or statutory procedures. CaseGuide specializes in Indian laws (BNS, BNSS, Consumer Protection, RTI, Motor Vehicles, Tenancy, and Civil/Criminal procedures).'}
+          </p>
+        </div>
+      </article>
+    );
+  }
+
   // Extract judgments if present in citations or structured response
-  const judgments = Array.isArray(rag.judgments)
+  const rawJudgments = Array.isArray(rag.judgments)
     ? rag.judgments
     : citations.filter(
         (c) =>
           c.act?.toLowerCase().includes('court') ||
           c.title?.toLowerCase().includes(' v. ') ||
           c.title?.toLowerCase().includes(' vs ') ||
-          c.section?.toLowerCase().includes('judgment')
+          c.section?.toLowerCase().includes('judgment') ||
+          c.court
       );
 
+  const judgments = rawJudgments.map((j) => {
+    return {
+      title: j.title || j.case_title || j.act || 'Court Precedent',
+      court: j.court || j.court_name || (j.act?.includes('Court') ? j.act : 'Supreme Court of India'),
+      date: j.date || j.judgment_date || j.year || 'Reported Judgment',
+      caseNumber: j.case_number || j.case_no || (j.section?.includes('Writ') || j.section?.includes('Appeal') ? j.section : 'Writ Petition / Appeal'),
+      paragraphRef: j.paragraphs || j.paragraph_ref || (j.supporting_text ? `Key Excerpt: "${j.supporting_text}"` : null),
+      pdfUrl: j.url || j.pdf_url || `https://indiankanoon.org/search/?formInput=${encodeURIComponent(j.title || j.act || 'Supreme Court')}`
+    };
+  });
+
   const statutoryCitations = citations.filter(
-    (c) => !judgments.some((j) => j.citation_id === c.citation_id)
+    (c) => !rawJudgments.some((j) => j.citation_id === c.citation_id || j.title === c.title)
   );
 
-  // Plain text export for clipboard
-  const handleCopyText = () => {
+  // Plain text export for clipboard / share
+  const getFormattedPlainText = () => {
     const lines = [];
     if (problemTitle) lines.push(`CaseGuide Legal Research: ${problemTitle}`, ``);
+    if (category) lines.push(`Category: ${category}`, ``);
     if (summaryText) lines.push(`Summary:`, summaryText, ``);
     if (explanationPoints.length > 0) {
       lines.push(`Legal Explanation:`);
       explanationPoints.forEach((p, i) => lines.push(`${i + 1}. ${p}`));
       lines.push(``);
     }
-    if (citations.length > 0) {
-      lines.push(`Sources:`);
-      citations.forEach((c) => {
+    if (statutoryCitations.length > 0) {
+      lines.push(`Sources & Provisions:`);
+      statutoryCitations.forEach((c) => {
         lines.push(`- ${c.act} (${c.section || ''}): ${c.title || ''}`);
         if (c.supporting_text) lines.push(`  "${c.supporting_text}"`);
+      });
+      lines.push(``);
+    }
+    if (judgments.length > 0) {
+      lines.push(`Relevant Precedents:`);
+      judgments.forEach((j) => {
+        lines.push(`- ${j.title} (${j.court}, ${j.date}) - ${j.caseNumber}`);
       });
       lines.push(``);
     }
@@ -113,11 +156,32 @@ export default function LegalAnswerCard({
       });
       lines.push(``);
     }
-    lines.push(`Generated by CaseGuide AI Indian Legal Research Assistant.`);
+    lines.push(`Generated by CaseGuide AI — Indian Legal Research Assistant.`);
+    return lines.join('\n');
+  };
 
-    navigator.clipboard.writeText(lines.join('\n'));
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(getFormattedPlainText());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    const text = getFormattedPlainText();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `CaseGuide: ${problemTitle || 'Legal Research'}`,
+          text
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch {
+        // Share cancelled or unavailable
+      }
+    } else {
+      handleCopyText();
+    }
   };
 
   const handlePrint = () => {
@@ -130,7 +194,7 @@ export default function LegalAnswerCard({
 
   return (
     <article className="claude-answer-container" id="legal-answer-card">
-      {/* Category Pill & Problem Title */}
+      {/* Category Tag & Problem Title */}
       {problemTitle && (
         <div className="answer-topic-header">
           <span className="topic-category-badge">{category}</span>
@@ -141,7 +205,7 @@ export default function LegalAnswerCard({
       {/* 1. In Plain Words (Executive Editorial Summary) */}
       {summaryText && (
         <div className="editorial-summary-prose">
-          <ReactMarkdown>{summaryText}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
         </div>
       )}
 
@@ -152,7 +216,7 @@ export default function LegalAnswerCard({
           <ul className="explanation-bullet-list">
             {explanationPoints.map((point, idx) => (
               <li key={idx} className="explanation-bullet-item">
-                <ReactMarkdown>{point}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{point}</ReactMarkdown>
               </li>
             ))}
           </ul>
@@ -244,32 +308,42 @@ export default function LegalAnswerCard({
             {judgments.map((j, idx) => (
               <div key={idx} className="judgment-card">
                 <div className="judgment-card-header">
-                  <div className="judgment-title">{j.title || j.act || 'Court Precedent'}</div>
+                  <div className="judgment-title">{j.title}</div>
                   <span className="judgment-badge">Precedent</span>
                 </div>
 
                 <div className="judgment-meta-row">
-                  <span className="judgment-court">{j.act || 'High Court of India'}</span>
-                  {j.section && <span className="judgment-case-no">{j.section}</span>}
+                  <span className="judgment-court">{j.court}</span>
+                  <span className="judgment-dot">•</span>
+                  <span className="judgment-case-no">{j.caseNumber}</span>
+                  {j.date && (
+                    <>
+                      <span className="judgment-dot">•</span>
+                      <span className="judgment-date">
+                        <Calendar size={12} className="meta-icon" /> {j.date}
+                      </span>
+                    </>
+                  )}
                 </div>
 
-                {j.supporting_text && (
+                {j.paragraphRef && (
                   <p className="judgment-excerpt">
-                    "{j.supporting_text}"
+                    {j.paragraphRef}
                   </p>
                 )}
 
                 <div className="judgment-card-footer">
                   <span className="judgment-ref-tag">
-                    <FileText size={12} /> Legal Reference
+                    <FileText size={12} /> Indian Case Law
                   </span>
                   <a
-                    href={`https://indiankanoon.org/search/?formInput=${encodeURIComponent(j.title || j.act)}`}
+                    href={j.pdfUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="judgment-link"
+                    title="View judgment document and record"
                   >
-                    <span>View Judgment Record</span>
+                    <span>View Judgment Record / PDF</span>
                     <ExternalLink size={12} />
                   </a>
                 </div>
@@ -346,7 +420,7 @@ export default function LegalAnswerCard({
           >
             {copied ? (
               <>
-                <Check size={14} color="#10b981" />
+                <Check size={14} color="var(--primary-brand)" />
                 <span>Copied</span>
               </>
             ) : (
@@ -369,6 +443,26 @@ export default function LegalAnswerCard({
               <span>Retry</span>
             </button>
           )}
+
+          {/* Share Response */}
+          <button
+            type="button"
+            className="action-pill-btn"
+            onClick={handleShare}
+            title="Share response"
+          >
+            {shared ? (
+              <>
+                <Check size={14} color="var(--primary-brand)" />
+                <span>Shared</span>
+              </>
+            ) : (
+              <>
+                <Share2 size={14} />
+                <span>Share</span>
+              </>
+            )}
+          </button>
 
           {/* Print / PDF */}
           <button
